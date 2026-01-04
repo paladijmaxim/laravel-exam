@@ -12,8 +12,8 @@ class ArchivedThingController extends Controller
 {
     public function index()
     {
-        // ИЗМЕНЕНИЕ: убрать 'deleted_at' из latest()
-        $archivedThings = ArchivedThing::latest()  // без параметра
+        $archivedThings = ArchivedThing::withTrashed()
+            ->latest()
             ->paginate(15);
         
         return view('archived.index', compact('archivedThings'));

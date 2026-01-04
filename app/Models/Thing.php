@@ -105,7 +105,7 @@ class Thing extends Model
                     'updated_at' => $thing->updated_at->toIso8601String(),
                 ],
                 
-                'deleted_at' => now(),
+                // 'deleted_at' => now(),
             ]);
         });
     }
