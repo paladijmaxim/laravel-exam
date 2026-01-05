@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Thing;
+use App\Models\Description;
 use App\Models\Place;
 use App\Models\User;
 use App\Models\UseModel;
@@ -10,7 +11,6 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ThingAssignedMail;
@@ -22,9 +22,11 @@ class ThingController extends Controller
     public function index()
     {
         $things = Cache::remember('things_all', 300, function () {
-            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit'])
-                       ->latest()
-                       ->paginate(10);
+            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->latest()
+            ->paginate(10);
         });
         
         return view('things.index', compact('things'));
@@ -60,7 +62,7 @@ class ThingController extends Controller
 
     public function show(Thing $thing)
     {
-        $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit']);
+        $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator']);
         $currentUsage = $thing->usages()->latest()->first();
         
         return view('things.show', compact('thing', 'currentUsage'));
@@ -102,10 +104,12 @@ class ThingController extends Controller
     public function my()
     {
         $things = Cache::remember('things_my_' . Auth::id(), 300, function () {
-            return Thing::where('master', Auth::id())
-                ->with(['usages.user', 'usages.place', 'usages.unit'])
-                ->latest()
-                ->paginate(10);
+            return Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->where('master', Auth::id())
+            ->latest()
+            ->paginate(10);
         });
         
         return view('things.my', compact('things'));
@@ -114,7 +118,9 @@ class ThingController extends Controller
     public function borrowed()
     {
         $usages = UseModel::where('user_id', Auth::id())
-            ->with(['thing.owner', 'place', 'unit'])
+            ->with(['thing.owner', 'thing.descriptions' => function($query) {
+                $query->where('is_current', true);
+            }, 'place', 'unit'])
             ->latest()
             ->paginate(10);
         
@@ -124,14 +130,16 @@ class ThingController extends Controller
     public function repair()
     {
         $things = Cache::remember('things_repair', 300, function () {
-            return Thing::whereHas('usages', function($query) {
-                    $query->whereHas('place', function($q) {
-                        $q->where('repair', true);
-                    });
-                })
-                ->with(['owner', 'usages.place', 'usages.unit'])
-                ->latest()
-                ->paginate(10);
+            return Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->whereHas('usages', function($query) {
+                $query->whereHas('place', function($q) {
+                    $q->where('repair', true);
+                });
+            })
+            ->latest()
+            ->paginate(10);
         });
         
         return view('things.repair', compact('things'));
@@ -140,14 +148,16 @@ class ThingController extends Controller
     public function work()
     {
         $things = Cache::remember('things_work', 300, function () {
-            return Thing::whereHas('usages', function($query) {
-                    $query->whereHas('place', function($q) {
-                        $q->where('work', true);
-                    });
-                })
-                ->with(['owner', 'usages.place', 'usages.unit'])
-                ->latest()
-                ->paginate(10);
+            return Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->whereHas('usages', function($query) {
+                $query->whereHas('place', function($q) {
+                    $q->where('work', true);
+                });
+            })
+            ->latest()
+            ->paginate(10);
         });
         
         return view('things.work', compact('things'));
@@ -156,14 +166,16 @@ class ThingController extends Controller
     public function used()
     {
         $things = Cache::remember('things_used', 300, function () {
-            return Thing::whereHas('usages')
-                ->where('master', Auth::id())
-                ->whereHas('usages', function($query) {
-                    $query->where('user_id', '!=', Auth::id());
-                })
-                ->with(['usages.user', 'usages.place', 'usages.unit'])
-                ->latest()
-                ->paginate(10);
+            return Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->whereHas('usages')
+            ->where('master', Auth::id())
+            ->whereHas('usages', function($query) {
+                $query->where('user_id', '!=', Auth::id());
+            })
+            ->latest()
+            ->paginate(10);
         });
         
         return view('things.used', compact('things'));
@@ -174,12 +186,67 @@ class ThingController extends Controller
         $this->authorize('viewAll', Thing::class);
         
         $things = Cache::remember('things_admin_all', 300, function () {
-            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit'])
-                       ->latest()
-                       ->paginate(20);
+            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->latest()
+            ->paginate(20);
         });
         
         return view('things.admin-all', compact('things'));
+    }
+
+    public function addDescription(Request $request, Thing $thing)
+    {
+        $this->authorize('update', $thing);
+        
+        $request->validate([
+            'description' => 'required|string|min:3'
+        ]);
+
+        // Сбрасываем текущий статус у всех описаний этой вещи
+        $thing->descriptions()->update(['is_current' => false]);
+        
+        // Создаем новое описание как текущее
+        $thing->descriptions()->create([
+            'description' => $request->description,
+            'is_current' => true,
+            'created_by' => Auth::id()
+        ]);
+
+        Cache::forget('things_all');
+        Cache::forget('things_my_' . Auth::id());
+        Cache::forget('things_used');
+        Cache::forget('things_repair');
+        Cache::forget('things_work');
+        Cache::forget('things_admin_all');
+
+        return back()->with('success', 'Описание успешно добавлено!');
+    }
+
+    public function setCurrentDescription(Request $request, Thing $thing, Description $description)
+    {
+        $this->authorize('update', $thing);
+        
+        // Проверяем что описание принадлежит этой вещи
+        if ($description->thing_id != $thing->id) {
+            abort(403);
+        }
+
+        // Сбрасываем текущий статус у всех описаний
+        $thing->descriptions()->update(['is_current' => false]);
+        
+        // Устанавливаем выбранное как текущее
+        $description->update(['is_current' => true]);
+
+        Cache::forget('things_all');
+        Cache::forget('things_my_' . Auth::id());
+        Cache::forget('things_used');
+        Cache::forget('things_repair');
+        Cache::forget('things_work');
+        Cache::forget('things_admin_all');
+
+        return back()->with('success', 'Текущее описание обновлено!');
     }
 
     public function transfer(Request $request, Thing $thing)
@@ -249,6 +316,7 @@ class ThingController extends Controller
         Cache::forget('things_used');
         Cache::forget('things_repair');
         Cache::forget('things_work');
+        Cache::forget('things_my_' . Auth::id());
 
         $message = 'Вещь успешно передана в пользование!';
         if ($emailSent) {

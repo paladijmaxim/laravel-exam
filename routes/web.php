@@ -57,6 +57,8 @@ Route::middleware('auth')->group(function () {
     
     // Возврат вещи
     Route::post('/things/{thing}/return', [ThingController::class, 'return'])->name('things.return');
+    Route::post('/things/{thing}/add-description', [ThingController::class, 'addDescription'])->name('things.add-description');
+Route::post('/things/{thing}/set-current-description/{description}', [ThingController::class, 'setCurrentDescription'])->name('things.set-current-description');
     // Архив удаленных вещей
 Route::prefix('archived')->name('archived.')->middleware('auth')->group(function () {
     Route::get('/', [ArchivedThingController::class, 'index'])->name('index');

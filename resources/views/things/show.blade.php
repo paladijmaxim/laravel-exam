@@ -12,7 +12,9 @@
                 </div>
                 
                 <div class="card-body">
-                    <p><strong>Описание:</strong> {{ $thing->description ?? 'Нет описания' }}</p>
+                    <p><strong>Текущее описание:</strong> 
+                        {{ $thing->currentDescription ? $thing->currentDescription->description : 'Нет описания' }}
+                    </p>
                     <p><strong>Гарантия/срок годности:</strong> 
                         {{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : 'Нет гарантии' }}
                     </p>
@@ -51,6 +53,63 @@
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transferModal">
                             <i class="fas fa-exchange-alt"></i> Передать вещь
                         </button>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Блок описаний -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Все описания вещи</h5>
+                </div>
+                <div class="card-body">
+                    @if($thing->descriptions->count() > 0)
+                        <div class="list-group mb-3">
+                            @foreach($thing->descriptions as $desc)
+                                <div class="list-group-item {{ $desc->is_current ? 'list-group-item-primary' : '' }}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <p class="mb-1">{{ $desc->description }}</p>
+                                            <small class="text-muted">
+                                                Добавил: {{ $desc->creator->name }}, 
+                                                {{ $desc->created_at->format('d.m.Y H:i') }}
+                                                @if($desc->is_current)
+                                                    <span class="badge bg-success ms-2">Текущее</span>
+                                                @endif
+                                            </small>
+                                        </div>
+                                        @if($thing->master == Auth::id() && !$desc->is_current)
+                                            <form action="{{ route('things.set-current-description', ['thing' => $thing, 'description' => $desc]) }}" 
+                                                  method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    Сделать текущим
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted">Нет дополнительных описаний</p>
+                    @endif
+
+                    @if($thing->master == Auth::id() || Auth::user()->isAdmin())
+                        <form action="{{ route('things.add-description', $thing) }}" method="POST" class="mt-4">
+                            @csrf
+                            <div class="mb-3">
+                                <label for="new_description" class="form-label">Добавить новое описание</label>
+                                <textarea class="form-control" id="new_description" name="description" 
+                                          rows="3" placeholder="Введите новое описание..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Добавить описание
+                            </button>
+                            <div class="form-text">
+                                Новое описание станет текущим и будет отображаться в общих списках
+                            </div>
+                        </form>
                     @endif
                 </div>
             </div>
@@ -136,11 +195,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button type="submit" class="btn btn-primary">Передать</button>
                 </div>
-                @if($thing->master == Auth::id() && !$thing->isInUse())
-    <a href="{{ route('things.transfer.form', $thing) }}" class="btn btn-primary">
-        <i class="fas fa-exchange-alt"></i> Передать вещь
-    </a>
-@endif
             </form>
         </div>
     </div>

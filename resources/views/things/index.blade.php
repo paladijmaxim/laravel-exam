@@ -19,9 +19,18 @@
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">{{ $thing->name }}</h5>
+                        
+                        <!-- НОВЫЙ БЛОК С ТЕКУЩИМ ОПИСАНИЕМ -->
                         <p class="card-text text-muted">
-                            {{ Str::limit($thing->description, 100) }}
+                            @if($thing->currentDescription)
+                                {{ \Illuminate\Support\Str::limit($thing->currentDescription->description, 100) }}
+                            @elseif($thing->description)
+                                {{ \Illuminate\Support\Str::limit($thing->description, 100) }}
+                            @else
+                                Нет описания
+                            @endif
                         </p>
+                        <!-- КОНЕЦ НОВОГО БЛОКА -->
                         
                         <ul class="list-unstyled">
                             <li><strong>Владелец:</strong> {{ $thing->owner->name }}</li>

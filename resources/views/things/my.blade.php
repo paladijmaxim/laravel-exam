@@ -20,6 +20,15 @@
                         <p class="card-text text-muted">
                             {{ Str::limit($thing->description, 100) }}
                         </p>
+                        <p class="card-text text-muted">
+                            @if($thing->currentDescription)
+                                {{ \Illuminate\Support\Str::limit($thing->currentDescription->description, 100) }}
+                            @elseif($thing->description)
+                                {{ \Illuminate\Support\Str::limit($thing->description, 100) }}
+                            @else
+                                Нет описания
+                            @endif
+                        </p>
                         
                         <ul class="list-unstyled">
                             <li><strong>Гарантия:</strong> 

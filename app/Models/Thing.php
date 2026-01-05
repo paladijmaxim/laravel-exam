@@ -34,6 +34,12 @@ class Thing extends Model
         return $this->hasMany(UseModel::class, 'thing_id');
     }
 
+    // Все описания вещи
+    public function descriptions(): HasMany
+    {
+        return $this->hasMany(Description::class);
+    }
+
     // Текущее использование (последняя запись)
     public function currentUsage()
     {
@@ -104,18 +110,19 @@ class Thing extends Model
                     'created_at' => $thing->created_at->toIso8601String(),
                     'updated_at' => $thing->updated_at->toIso8601String(),
                 ],
-                
-                // 'deleted_at' => now(),
             ]);
         });
-    }
 
-    /**
-     * Архивация вещи (старый метод для совместимости)
-     */
-    public static function archiveThing(Thing $thing): void
-    {
-        // Теперь это делается в booted методе
+        // При создании вещи создаем первое описание
+        static::created(function (Thing $thing) {
+            if ($thing->description) {
+                $thing->descriptions()->create([
+                    'description' => $thing->description,
+                    'is_current' => true,
+                    'created_by' => $thing->master
+                ]);
+            }
+        });
     }
 
     /**
@@ -128,7 +135,7 @@ class Thing extends Model
             'name' => $archivedThing->name,
             'description' => $archivedThing->description,
             'wrnt' => $archivedThing->wrnt,
-            'master' => $restorer->id, // Хозяин - тот, кто восстановил
+            'master' => $restorer->id,
         ]);
 
         // Обновляем запись в архиве
