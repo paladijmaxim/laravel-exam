@@ -5,7 +5,7 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-archive"></i> Архив удаленных вещей</h1>
+        <h1> Архив удаленных вещей</h1>
         <a href="{{ route('things.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Назад к вещам
         </a>
@@ -113,20 +113,5 @@
             <i class="fas fa-info-circle"></i> Архив пуст. Здесь будут появляться удаленные вещи.
         </div>
     @endif
-
-    <div class="card mt-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="fas fa-info-circle"></i> Информация об архиве</h5>
-        </div>
-        <div class="card-body">
-            <ul>
-                <li>В архиве хранятся удаленные вещи со всей информацией о них</li>
-                <li>Восстановленная вещь становится вашей собственностью</li>
-                <li>Записи в архиве не удаляются после восстановления</li>
-                <li>Только администратор может удалять записи из архива навсегда</li>
-                <li>Восстановленные вещи помечаются зеленым цветом</li>
-            </ul>
-        </div>
-    </div>
 </div>
 @endsection

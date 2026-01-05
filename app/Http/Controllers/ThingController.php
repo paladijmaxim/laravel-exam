@@ -197,57 +197,59 @@ class ThingController extends Controller
     }
 
     public function addDescription(Request $request, Thing $thing)
-    {
-        $this->authorize('update', $thing);
-        
-        $request->validate([
-            'description' => 'required|string|min:3'
-        ]);
+{
+    $this->authorize('update', $thing);
+    
+    $request->validate([
+        'description' => 'required|string|min:3'
+    ]);
 
-        // Сбрасываем текущий статус у всех описаний этой вещи
-        $thing->descriptions()->update(['is_current' => false]);
-        
-        // Создаем новое описание как текущее
-        $thing->descriptions()->create([
-            'description' => $request->description,
-            'is_current' => true,
-            'created_by' => Auth::id()
-        ]);
+    // Сбрасываем текущий статус у всех описаний этой вещи
+    $thing->descriptions()->update(['is_current' => false]);
+    
+    // Создаем новое описание как текущее
+    $thing->descriptions()->create([
+        'description' => $request->description,
+        'is_current' => true,
+        'created_by' => Auth::id()
+    ]);
 
-        Cache::forget('things_all');
-        Cache::forget('things_my_' . Auth::id());
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_admin_all');
+    // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ (важно!)
+    $thing->update(['description' => $request->description]);
 
-        return back()->with('success', 'Описание успешно добавлено!');
+    // Очищаем ВЕСЬ кэш
+    Cache::flush(); // или очисти конкретные ключи:
+    // Cache::forget('things_all');
+    // Cache::forget('things_my_' . Auth::id());
+    // Cache::forget('things_used');
+    // Cache::forget('things_repair');
+    // Cache::forget('things_work');
+    // Cache::forget('things_admin_all');
+
+    return back()->with('success', 'Описание успешно добавлено!');
+}
+
+public function setCurrentDescription(Request $request, Thing $thing, Description $description)
+{
+    $this->authorize('update', $thing);
+    
+    if ($description->thing_id != $thing->id) {
+        abort(403);
     }
 
-    public function setCurrentDescription(Request $request, Thing $thing, Description $description)
-    {
-        $this->authorize('update', $thing);
-        
-        // Проверяем что описание принадлежит этой вещи
-        if ($description->thing_id != $thing->id) {
-            abort(403);
-        }
+    // Сбрасываем текущий статус у всех описаний
+    $thing->descriptions()->update(['is_current' => false]);
+    
+    // Устанавливаем выбранное как текущее
+    $description->update(['is_current' => true]);
+    
+    // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
+    $thing->update(['description' => $description->description]);
 
-        // Сбрасываем текущий статус у всех описаний
-        $thing->descriptions()->update(['is_current' => false]);
-        
-        // Устанавливаем выбранное как текущее
-        $description->update(['is_current' => true]);
+    Cache::flush();
 
-        Cache::forget('things_all');
-        Cache::forget('things_my_' . Auth::id());
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_admin_all');
-
-        return back()->with('success', 'Текущее описание обновлено!');
-    }
+    return back()->with('success', 'Текущее описание обновлено!');
+}
 
     public function transfer(Request $request, Thing $thing)
     {

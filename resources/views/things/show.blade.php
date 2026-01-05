@@ -12,12 +12,14 @@
                 </div>
                 
                 <div class="card-body">
-                    <p><strong>Текущее описание:</strong> 
-                        {{ $thing->currentDescription ? $thing->currentDescription->description : 'Нет описания' }}
-                    </p>
-                    <p><strong>Гарантия/срок годности:</strong> 
-                        {{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : 'Нет гарантии' }}
-                    </p>
+                <p><strong>Текущее описание:</strong> 
+                    @php
+                        // Явно получаем текущее описание
+                        $currentDesc = $thing->descriptions->where('is_current', true)->first();
+                    @endphp
+                    
+                    {{ $currentDesc ? $currentDesc->description : ($thing->description ?? 'Нет описания') }}
+                </p>
                     <p><strong>Владелец:</strong> {{ $thing->owner->name }}</p>
                     
                     @if($currentUsage)

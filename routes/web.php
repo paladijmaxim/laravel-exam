@@ -60,10 +60,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/things/{thing}/add-description', [ThingController::class, 'addDescription'])->name('things.add-description');
 Route::post('/things/{thing}/set-current-description/{description}', [ThingController::class, 'setCurrentDescription'])->name('things.set-current-description');
     // Архив удаленных вещей
-Route::prefix('archived')->name('archived.')->middleware('auth')->group(function () {
-    Route::get('/', [ArchivedThingController::class, 'index'])->name('index');
-    Route::get('/{archivedThing}', [ArchivedThingController::class, 'show'])->name('show');
-    Route::post('/{archivedThing}/restore', [ArchivedThingController::class, 'restore'])->name('restore');
-    Route::delete('/{archivedThing}/force-delete', [ArchivedThingController::class, 'forceDelete'])->name('force-delete');
-});
+    Route::prefix('archived')->name('archived.')->middleware('auth')->group(function () {
+        Route::get('/', [ArchivedThingController::class, 'index'])->name('index');
+        Route::get('/{id}', [ArchivedThingController::class, 'show'])->name('show');
+        Route::post('/{id}/restore', [ArchivedThingController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/force-delete', [ArchivedThingController::class, 'forceDelete'])->name('force-delete');
+    });
 });
