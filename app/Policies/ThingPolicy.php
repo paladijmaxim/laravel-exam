@@ -19,16 +19,19 @@ class ThingPolicy
 
     public function create(User $user): bool
     {
-        return !$user->isAdmin();; 
+        return !$user->isAdmin();
     }
 
     public function update(User $user, Thing $thing): bool
     {
+        // ТОЛЬКО админ ИЛИ хозяин (master)
+        // Пользователь, на которого назначена вещь (user_id) - НЕ может редактировать
         return $user->isAdmin() || $user->id === $thing->master;
     }
 
     public function delete(User $user, Thing $thing): bool
     {
+        // Только админ или хозяин
         return $user->isAdmin() || $user->id === $thing->master;
     }
 

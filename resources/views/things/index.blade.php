@@ -13,14 +13,14 @@
         @endcan
     </div>
 
+    @if($things->count() > 0)
     <div class="row">
-        @forelse($things as $thing)
+        @foreach($things as $thing)
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">{{ $thing->name }}</h5>
                         
-                        <!-- НОВЫЙ БЛОК С ТЕКУЩИМ ОПИСАНИЕМ -->
                         <p class="card-text text-muted">
                             @if($thing->currentDescription)
                                 {{ \Illuminate\Support\Str::limit($thing->currentDescription->description, 100) }}
@@ -30,7 +30,6 @@
                                 Нет описания
                             @endif
                         </p>
-                        <!-- КОНЕЦ НОВОГО БЛОКА -->
                         
                         <ul class="list-unstyled">
                             <li><strong>Владелец:</strong> {{ $thing->owner->name }}</li>
@@ -63,11 +62,13 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             
-                            @if($thing->master == Auth::id())
+                            @can('update', $thing)
                                 <a href="{{ route('things.edit', $thing) }}" class="btn btn-sm btn-warning">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                
+                            @endcan
+                            
+                            @can('delete', $thing)
                                 <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
@@ -76,25 +77,24 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
-                            @endif
+                            @endcan
                         </div>
                     </div>
                 </div>
             </div>
-        @empty
-            <div class="col-12">
-                <div class="alert alert-info">
-                    Пока нет вещей. 
-                    @can('create', App\Models\Thing::class)
-                    <a href="{{ route('things.create') }}">Создать первую вещь</a>
-                    @endcan
-                </div>
-            </div>
-        @endforelse
+        @endforeach
     </div>
 
     <div class="d-flex justify-content-center">
         {{ $things->links() }}
     </div>
+    @else
+        <div class="alert alert-info">
+            Пока нет вещей. 
+            @can('create', App\Models\Thing::class)
+            <a href="{{ route('things.create') }}">Создать первую вещь</a>
+            @endcan
+        </div>
+    @endif
 </div>
 @endsection

@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ThingController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\ArchivedThingController;
+use App\Http\Controllers\NotificationController;
 
 // Главная страница
 Route::get('/', function () {
@@ -65,5 +66,12 @@ Route::post('/things/{thing}/set-current-description/{description}', [ThingContr
         Route::get('/{id}', [ArchivedThingController::class, 'show'])->name('show');
         Route::post('/{id}/restore', [ArchivedThingController::class, 'restore'])->name('restore');
         Route::delete('/{id}/force-delete', [ArchivedThingController::class, 'forceDelete'])->name('force-delete');
+    });
+
+    Route::prefix('notifications')->name('notifications.')->middleware('auth')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::get('/unread/count', [NotificationController::class, 'getUnreadCount'])->name('unread.count');
     });
 });

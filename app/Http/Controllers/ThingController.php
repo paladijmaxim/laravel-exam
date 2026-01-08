@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use App\Mail\ThingAssignedMail;
 use App\Jobs\SendThingAssignedEmail;
 use Illuminate\Support\Facades\DB;
+use App\Models\Notification as AppNotification;
 
 class ThingController extends Controller
 {
@@ -276,6 +277,17 @@ public function setCurrentDescription(Request $request, Thing $thing, Descriptio
             'user_id' => $request->user_id,
             'amount' => $request->amount,
             'unit_id' => $request->unit_id,
+        ]);
+
+        AppNotification::create([
+            'user_id' => $recipient->id,
+            'thing_id' => $thing->id,
+            'from_user_id' => Auth::id(),
+            'type' => 'assignment',
+            'title' => 'Вам назначена вещь',
+            'message' => "Пользователь " . Auth::user()->name . 
+                         " назначил вам вещь '{$thing->name}' для использования в месте: {$place->name}. " .
+                         "Количество: {$request->amount} шт."
         ]);
 
         $emailSent = false;

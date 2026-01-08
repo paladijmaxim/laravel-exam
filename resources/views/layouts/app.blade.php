@@ -96,6 +96,10 @@
                         </a>
                     </li>
                     
+                    @auth
+                        @include('components.notifications')
+                    @endauth
+
                     <!-- Панель администратора -->
                     @can('admin')
                     <li class="nav-item dropdown">
