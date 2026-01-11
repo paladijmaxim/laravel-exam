@@ -58,8 +58,22 @@ Route::middleware('auth')->group(function () {
     
     // Возврат вещи
     Route::post('/things/{thing}/return', [ThingController::class, 'return'])->name('things.return');
-    Route::post('/things/{thing}/add-description', [ThingController::class, 'addDescription'])->name('things.add-description');
-Route::post('/things/{thing}/set-current-description/{description}', [ThingController::class, 'setCurrentDescription'])->name('things.set-current-description');
+    
+    // ОПИСАНИЯ ВЕЩЕЙ - ИСПОЛЬЗУЮТСЯ В BLADE (не меняем названия!)
+    // 1. Добавление нового описания
+    Route::post('/things/{thing}/add-description', [ThingController::class, 'addDescription'])
+        ->name('things.add-description');
+    
+    // 2. Установка текущего описания
+    Route::post('/things/{thing}/set-current-description/{description}', 
+        [ThingController::class, 'setCurrentDescription'])
+        ->name('things.set-current-description');
+    
+    // 3. Редактирование описания (для модального окна - ЗАДАНИЕ 17)
+    Route::put('/things/{thing}/update-description/{description}', 
+        [ThingController::class, 'updateDescription'])
+        ->name('things.update-description');
+    
     // Архив удаленных вещей
     Route::prefix('archived')->name('archived.')->middleware('auth')->group(function () {
         Route::get('/', [ArchivedThingController::class, 'index'])->name('index');
@@ -68,6 +82,7 @@ Route::post('/things/{thing}/set-current-description/{description}', [ThingContr
         Route::delete('/{id}/force-delete', [ArchivedThingController::class, 'forceDelete'])->name('force-delete');
     });
 
+    // Уведомления
     Route::prefix('notifications')->name('notifications.')->middleware('auth')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
         Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');

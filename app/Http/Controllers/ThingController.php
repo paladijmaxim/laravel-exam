@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ThingAssignedMail;
+use App\Mail\ThingDescriptionUpdated;
 use App\Jobs\SendThingAssignedEmail;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification as AppNotification;
@@ -85,7 +86,16 @@ class ThingController extends Controller
             'wrnt' => 'nullable|date',
         ]);
 
+        // Сохраняем старое описание для проверки изменений
+        $oldDescription = $thing->description;
+
         $thing->update($request->only(['name', 'description', 'wrnt']));
+
+        // Отправляем уведомление если изменилось описание в основном поле
+        if ($oldDescription !== $request->description && $request->description) {
+            $this->sendDescriptionNotifications($thing, $request->description, false);
+        }
+
         Cache::forget('things_all');
 
         return redirect()->route('things.index')
@@ -198,59 +208,112 @@ class ThingController extends Controller
     }
 
     public function addDescription(Request $request, Thing $thing)
-{
-    $this->authorize('update', $thing);
-    
-    $request->validate([
-        'description' => 'required|string|min:3'
-    ]);
+    {
+        $this->authorize('update', $thing);
+        
+        $request->validate([
+            'description' => 'required|string|min:3'
+        ]);
 
-    // Сбрасываем текущий статус у всех описаний этой вещи
-    $thing->descriptions()->update(['is_current' => false]);
-    
-    // Создаем новое описание как текущее
-    $thing->descriptions()->create([
-        'description' => $request->description,
-        'is_current' => true,
-        'created_by' => Auth::id()
-    ]);
+        // Сбрасываем текущий статус у всех описаний этой вещи
+        $thing->descriptions()->update(['is_current' => false]);
+        
+        // Создаем новое описание как текущее
+        $thing->descriptions()->create([
+            'description' => $request->description,
+            'is_current' => true,
+            'created_by' => Auth::id()
+        ]);
 
-    // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ (важно!)
-    $thing->update(['description' => $request->description]);
+        // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
+        $thing->update(['description' => $request->description]);
 
-    // Очищаем ВЕСЬ кэш
-    Cache::flush(); // или очисти конкретные ключи:
-    // Cache::forget('things_all');
-    // Cache::forget('things_my_' . Auth::id());
-    // Cache::forget('things_used');
-    // Cache::forget('things_repair');
-    // Cache::forget('things_work');
-    // Cache::forget('things_admin_all');
+        // Отправляем email уведомления
+        $this->sendDescriptionNotifications($thing, $request->description, true);
 
-    return back()->with('success', 'Описание успешно добавлено!');
-}
+        // Очищаем кэш
+        Cache::forget('things_all');
+        Cache::forget('things_my_' . Auth::id());
+        Cache::forget('things_used');
+        Cache::forget('things_repair');
+        Cache::forget('things_work');
+        Cache::forget('things_admin_all');
 
-public function setCurrentDescription(Request $request, Thing $thing, Description $description)
-{
-    $this->authorize('update', $thing);
-    
-    if ($description->thing_id != $thing->id) {
-        abort(403);
+        return back()->with('success', 'Описание успешно добавлено!');
     }
 
-    // Сбрасываем текущий статус у всех описаний
-    $thing->descriptions()->update(['is_current' => false]);
-    
-    // Устанавливаем выбранное как текущее
-    $description->update(['is_current' => true]);
-    
-    // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
-    $thing->update(['description' => $description->description]);
+    public function updateDescription(Request $request, Thing $thing, Description $description)
+    {
+        $this->authorize('update', $thing);
+        
+        if ($description->thing_id != $thing->id) {
+            abort(403, 'Описание не принадлежит этой вещи');
+        }
 
-    Cache::flush();
+        $request->validate([
+            'new_description' => 'required|string|min:3'
+        ]);
 
-    return back()->with('success', 'Текущее описание обновлено!');
-}
+        // Сохраняем старое описание для сравнения
+        $oldDescription = $description->description;
+
+        // Обновляем описание
+        $description->update([
+            'description' => $request->new_description,
+            'is_current' => true,
+            'created_by' => Auth::id()
+        ]);
+
+        // Сбрасываем текущий статус у других описаний
+        $thing->descriptions()
+            ->where('id', '!=', $description->id)
+            ->update(['is_current' => false]);
+
+        // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
+        $thing->update(['description' => $request->new_description]);
+
+        // Отправляем email уведомления только если описание действительно изменилось
+        if ($oldDescription !== $request->new_description) {
+            $this->sendDescriptionNotifications($thing, $request->new_description, false);
+        }
+
+        // Очищаем кэш
+        Cache::forget('things_all');
+        Cache::forget('things_my_' . Auth::id());
+        Cache::forget('things_used');
+        Cache::forget('things_repair');
+        Cache::forget('things_work');
+        Cache::forget('things_admin_all');
+
+        return back()->with('success', 'Описание успешно обновлено!');
+    }
+
+    public function setCurrentDescription(Request $request, Thing $thing, Description $description)
+    {
+        $this->authorize('update', $thing);
+        
+        if ($description->thing_id != $thing->id) {
+            abort(403, 'Описание не принадлежит этой вещи');
+        }
+
+        // Сбрасываем текущий статус у всех описаний
+        $thing->descriptions()->update(['is_current' => false]);
+        
+        // Устанавливаем выбранное как текущее
+        $description->update(['is_current' => true]);
+        
+        // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
+        $thing->update(['description' => $description->description]);
+
+        Cache::forget('things_all');
+        Cache::forget('things_my_' . Auth::id());
+        Cache::forget('things_used');
+        Cache::forget('things_repair');
+        Cache::forget('things_work');
+        Cache::forget('things_admin_all');
+
+        return back()->with('success', 'Текущее описание обновлено!');
+    }
 
     public function transfer(Request $request, Thing $thing)
     {
@@ -382,4 +445,69 @@ public function setCurrentDescription(Request $request, Thing $thing, Descriptio
         
         return view('things.transfer', compact('thing', 'users', 'places', 'units'));
     }
+
+    /**
+     * Отправка email уведомлений при изменении описания вещи
+     *
+     * @param Thing $thing Вещь
+     * @param string $descriptionText Текст описания
+     * @param bool $isNew Это новое описание (true) или обновление (false)
+     * @return bool
+     */
+    private function sendDescriptionNotifications(Thing $thing, $descriptionText, $isNew)
+{
+    try {
+        // Получаем пользователей для уведомления
+        $usersToNotify = collect();
+        $currentUser = Auth::user();
+
+        // 1. Хозяин вещи (master) - если это не сам пользователь
+        if ($thing->master != $currentUser->id) {
+            $owner = $thing->owner;
+            if ($owner && $owner->email) {
+                $usersToNotify->push($owner);
+            }
+        }
+
+        // 2. Текущий пользователь, у которого вещь - если есть и не сам пользователь
+        $currentUsage = $thing->currentUsage(); // Используем метод, а не свойство
+        if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
+            $assignedUser = $currentUsage->user; // Используем отношение через usage
+            if ($assignedUser && $assignedUser->email) {
+                $usersToNotify->push($assignedUser);
+            }
+        }
+
+        // Если некому отправлять, выходим
+        if ($usersToNotify->isEmpty()) {
+            Log::info("Нет получателей для email уведомления об описании вещи {$thing->id}");
+            return true;
+        }
+
+        // Отправляем email каждому пользователю
+        foreach ($usersToNotify as $user) {
+            try {
+                // Используем queue для асинхронной отправки
+                Mail::to($user->email)
+                    ->queue(new ThingDescriptionUpdated(
+                        $thing, 
+                        $currentUser, 
+                        $descriptionText, 
+                        $isNew
+                    ));
+                
+                Log::info("Email уведомление об описании поставлено в очередь для {$user->email} (вещь: {$thing->name})");
+                
+            } catch (\Exception $e) {
+                Log::error("Ошибка отправки email для {$user->email}: " . $e->getMessage());
+            }
+        }
+
+        return true;
+        
+    } catch (\Exception $e) {
+        Log::error('Ошибка при отправке уведомлений об описании вещи ' . $thing->id . ': ' . $e->getMessage());
+        return false;
+    }
+}
 }
