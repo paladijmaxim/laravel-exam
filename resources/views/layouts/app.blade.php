@@ -10,11 +10,40 @@
         body { padding-top: 20px; background-color: #f8f9fa; }
         .navbar { margin-bottom: 20px; }
         .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .status-badge { font-size: 0.8em; padding: 3px 8px; border-radius: 12px; }
         .dropdown-menu { max-height: 400px; overflow-y: auto; }
+        
+        /* Стиль для уведомлений */
+        .pusher-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            max-width: 350px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .pusher-notification.fade-out {
+            animation: fadeOut 0.5s ease forwards;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateX(100%); }
+        }
     </style>
 </head>
 <body>
+    <!-- Ваша навигация остается без изменений -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
@@ -182,6 +211,68 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Подключаем Pusher -->
+    <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+    
+    <script>
+    // Инициализация Pusher
+    const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+        cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+        forceTLS: true
+    });
+
+    // Подписка на канал
+    const channel = pusher.subscribe('things');
+
+    // Обработка события создания вещи
+    channel.bind('thing.created', function(data) {
+        // Показываем уведомление
+        showNotification(data);
+    });
+
+    // Функция показа уведомления
+    function showNotification(data) {
+        const notification = document.createElement('div');
+        notification.className = 'pusher-notification';
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <i class="fas fa-check-circle" style="font-size: 20px; margin-right: 10px;"></i>
+                <h5 style="margin: 0; font-weight: bold;">🎉 Новая вещь!</h5>
+            </div>
+            <p style="margin: 0 0 5px 0;">
+                <strong>${data.user_name}</strong> создал(а) вещь:
+            </p>
+            <p style="margin: 0 0 10px 0; font-weight: bold;">"${data.thing_name}"</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <small>${data.time}</small>
+                <a href="${data.url}" class="btn btn-sm btn-light" style="text-decoration: none;">
+                    Посмотреть <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        `;
+        
+        // Добавляем на страницу
+        document.body.appendChild(notification);
+        
+        // Удаляем через 5 секунд
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 500);
+        }, 5000);
+    }
+    
+    // Обработка ошибок подключения
+    pusher.connection.bind('error', function(err) {
+        console.error('Pusher connection error:', err);
+    });
+    
+    // Обработка успешного подключения
+    pusher.connection.bind('connected', function() {
+        console.log('Pusher connected');
+    });
+    </script>
+    
     @stack('scripts')
 </body>
 </html>

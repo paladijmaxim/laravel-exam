@@ -19,6 +19,7 @@ use App\Jobs\SendThingAssignedEmail;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification as AppNotification;
 use App\Models\DescriptionNotification;
+use App\Events\ThingCreated;
 
 class ThingController extends Controller
 {
@@ -58,7 +59,11 @@ class ThingController extends Controller
             'master' => Auth::id(),
         ]);
 
+        // ОТПРАВКА СОБЫТИЯ В PUSHER
+        broadcast(new ThingCreated($thing, Auth::user()));
+
         Cache::forget('things_all');
+        
         return redirect()->route('things.index')
             ->with('success', 'Вещь успешно создана!');
     }
