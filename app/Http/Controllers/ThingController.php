@@ -18,6 +18,7 @@ use App\Mail\ThingDescriptionUpdated;
 use App\Jobs\SendThingAssignedEmail;
 use Illuminate\Support\Facades\DB;
 use App\Models\Notification as AppNotification;
+use App\Models\DescriptionNotification;
 
 class ThingController extends Controller
 {
@@ -230,7 +231,8 @@ class ThingController extends Controller
 
         // Отправляем email уведомления
         $this->sendDescriptionNotifications($thing, $request->description, true);
-
+        //discription
+        $this->sendDescriptionNotificationsNew($thing, $request->description, true);
         // Очищаем кэш
         Cache::forget('things_all');
         Cache::forget('things_my_' . Auth::id());
@@ -508,6 +510,43 @@ class ThingController extends Controller
     } catch (\Exception $e) {
         Log::error('Ошибка при отправке уведомлений об описании вещи ' . $thing->id . ': ' . $e->getMessage());
         return false;
+    }
+}
+    /**
+ * Отправка уведомлений через Notification (ЗАДАНИЕ 19)
+ */
+private function sendDescriptionNotificationsNew(Thing $thing, $descriptionText, $isNew)
+{
+    $usersToNotify = collect();
+    $currentUser = Auth::user();
+
+    // Хозяин вещи
+    if ($thing->master != $currentUser->id) {
+        $owner = $thing->owner;
+        if ($owner) {
+            $usersToNotify->push($owner);
+        }
+    }
+
+    // Текущий пользователь вещи
+    $currentUsage = $thing->currentUsage();
+    if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
+        $assignedUser = $currentUsage->user;
+        if ($assignedUser) {
+            $usersToNotify->push($assignedUser);
+        }
+    }
+
+    // Сохраняем в НОВУЮ таблицу
+    foreach ($usersToNotify as $user) {
+        DescriptionNotification::create([
+            'user_id' => $user->id,
+            'thing_id' => $thing->id,
+            'from_user_id' => $currentUser->id,
+            'type' => 'description_updated',
+            'title' => $isNew ? 'Добавлено описание' : 'Обновлено описание',
+            'message' => ($isNew ? 'Добавлено новое описание для вещи: ' : 'Обновлено описание вещи: ') . $thing->name,
+        ]);
     }
 }
 }

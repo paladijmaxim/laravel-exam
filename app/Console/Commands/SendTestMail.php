@@ -7,12 +7,12 @@ use App\Jobs\SendWeeklyDigest;
 
 class SendTestMail extends Command
 {
-    protected $signature = 'mail:send-test';  // КОМАНДА
+    protected $signature = 'mail:send-test';
     protected $description = 'Отправляет тестовую рассылку';
 
     public function handle()
     {
         SendWeeklyDigest::dispatch();
-        $this->info('✅ Рассылка запущена! Проверяй почту!');
+        $this->info('Рассылка запущена.');
     }
 }
