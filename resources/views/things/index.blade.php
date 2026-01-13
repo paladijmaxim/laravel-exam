@@ -17,42 +17,36 @@
     <div class="row">
         @foreach($things as $thing)
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ $thing->name }}</h5>
-                        
+                {{-- ВСЁ В ОДНОЙ ДИРЕКТИВЕ! --}}
+                <div class="card h-100" @mything($thing, 'style')>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cube @mything($thing, 'icon')"></i> 
+                            {{ $thing->name }}
+                            @mything($thing, 'badge')
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body @mything($thing, 'class')">
                         <p class="card-text text-muted">
-                            @if($thing->currentDescription)
-                                {{ \Illuminate\Support\Str::limit($thing->currentDescription->description, 100) }}
-                            @elseif($thing->description)
-                                {{ \Illuminate\Support\Str::limit($thing->description, 100) }}
-                            @else
-                                Нет описания
-                            @endif
+                            {{ $thing->description ?: 'Нет описания' }}
                         </p>
                         
                         <ul class="list-unstyled">
-                            <li><strong>Владелец:</strong> {{ $thing->owner->name }}</li>
-                            <li><strong>Гарантия:</strong> 
-                                {{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : 'нет' }}
-                            </li>
                             <li>
-                                <strong>Статус:</strong>
-                                @if($thing->isInUse())
-                                    @php
-                                        $usage = $thing->currentUsage();
-                                    @endphp
-                                    <span class="badge bg-warning">
-                                        У пользователя: {{ $usage->user->name }}
+                                <strong>Владелец:</strong> 
+                                @mything($thing)
+                                    <span class="text-success fw-bold">
+                                        <i class="fas fa-user-check"></i> Вы
                                     </span>
                                 @else
-                                    <span class="badge bg-success">Доступна</span>
-                                @endif
+                                    {{ $thing->owner->name }}
+                                @endmything
                             </li>
-                            @if($thing->isInUse())
-                                <li><strong>Место:</strong> {{ $thing->currentPlace()->name }}</li>
-                                <li><strong>Количество:</strong> {{ $thing->currentUsage()->formatted_amount }}</li>
-                            @endif
+                            <li>
+                                <strong>Гарантия:</strong> 
+                                {{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : 'нет' }}
+                            </li>
                         </ul>
                     </div>
                     
@@ -62,39 +56,27 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                             
-                            @can('update', $thing)
-                                <a href="{{ route('things.edit', $thing) }}" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            @endcan
-                            
-                            @can('delete', $thing)
-                                <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" 
-                                            onclick="return confirm('Удалить эту вещь?')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            @endcan
+                            {{-- Используем как условие (без параметра) --}}
+                            @mything($thing)
+                                <div class="btn-group">
+                                    <a href="{{ route('things.edit', $thing) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                onclick="return confirm('Удалить?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endmything
                         </div>
                     </div>
                 </div>
             </div>
         @endforeach
     </div>
-
-    <div class="d-flex justify-content-center">
-        {{ $things->links() }}
-    </div>
-    @else
-        <div class="alert alert-info">
-            Пока нет вещей. 
-            @can('create', App\Models\Thing::class)
-            <a href="{{ route('things.create') }}">Создать первую вещь</a>
-            @endcan
-        </div>
     @endif
 </div>
 @endsection

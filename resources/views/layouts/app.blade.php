@@ -12,6 +12,53 @@
         .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .dropdown-menu { max-height: 400px; overflow-y: auto; }
         
+        /* Стили для выделения вещей пользователя */
+        .my-thing-row {
+            background-color: #e8f5e9 !important;
+            border-left: 4px solid #28a745 !important;
+        }
+
+        .my-thing-row:hover {
+            background-color: #d4edda !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+        }
+
+        .my-thing-card {
+            border: 2px solid #28a745 !important;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+
+        .my-thing-highlight {
+            position: relative;
+        }
+
+        .my-thing-highlight::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #28a745, #20c997);
+            border-radius: 3px 0 0 3px;
+        }
+
+        .my-thing-icon {
+            color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes myThingPulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+
+        .my-thing-pulse {
+            animation: myThingPulse 2s infinite;
+        }
+
         /* Стиль для уведомлений */
         .pusher-notification {
             position: fixed;
