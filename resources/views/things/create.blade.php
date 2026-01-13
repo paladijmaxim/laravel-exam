@@ -34,18 +34,52 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="wrnt" class="form-label">Гарантия/срок годности</label>
+                            <label for="wrnt" class="form-label">Гарантия (дата окончания)</label>
                             <input type="date" class="form-control @error('wrnt') is-invalid @enderror" 
                                    id="wrnt" name="wrnt" value="{{ old('wrnt') }}">
                             @error('wrnt')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <div class="form-text">Укажите дату окончания гарантии или срока годности</div>
+                        </div>
+                        
+                        {{-- ВОТ ЭТО ПОЛЕ ДОБАВЬ --}}
+                        <div class="mb-3">
+                            <label for="place_id" class="form-label">Место хранения</label>
+                            <select class="form-control @error('place_id') is-invalid @enderror" 
+                                    id="place_id" name="place_id">
+                                <option value="">-- Не указывать место --</option>
+                                @foreach(App\Models\Place::all() as $place)
+                                    <option value="{{ $place->id }}" 
+                                        {{ old('place_id') == $place->id ? 'selected' : '' }}>
+                                        {{ $place->name }}
+                                        @if($place->repair) 
+                                            <span class="text-danger">(Ремонт)</span>
+                                        @elseif($place->work)
+                                            <span class="text-warning">(Работа)</span>
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Можно добавить вещь сразу в место хранения</div>
+                            @error('place_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Количество</label>
+                            <input type="number" class="form-control @error('amount') is-invalid @enderror" 
+                                   id="amount" name="amount" value="{{ old('amount', 1) }}" min="1" step="0.01">
+                            <div class="form-text">Сколько единиц этой вещи</div>
+                            @error('amount')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            После создания вещи вы сможете передать ее другому пользователю или указать место хранения.
+                            <strong>Важно:</strong> Если выбрать место с пометкой "Ремонт" или "Работа", 
+                            вещь автоматически получит соответствующее цветовое выделение.
                         </div>
                         
                         <div class="d-flex justify-content-between">
