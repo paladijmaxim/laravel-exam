@@ -17,8 +17,8 @@
     <div class="row">
         @foreach($things as $thing)
             <div class="col-md-4 mb-4">
-                {{-- ВСЁ В ОДНОЙ ДИРЕКТИВЕ! --}}
-                <div class="card h-100" @mything($thing, 'style')>
+                {{-- ДОБАВЛЯЕМ НОВУЮ ДИРЕКТИВУ СПЕЦИАЛЬНЫХ МЕСТ --}}
+                <div class="card h-100 @specialthing($thing)" @mything($thing, 'style')>
                     <div class="card-header">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-cube @mything($thing, 'icon')"></i> 
@@ -79,4 +79,27 @@
     </div>
     @endif
 </div>
+
+<style>
+    /* ДОБАВЛЯЕМ СТИЛИ ДЛЯ НОВОЙ ДИРЕКТИВЫ */
+    .thing-repair {
+        border: 2px solid #dc3545 !important;
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%);
+    }
+    
+    .thing-work {
+        border: 2px solid #ffc107 !important;
+        background: linear-gradient(135deg, #fff9db 0%, #ffec99 100%);
+    }
+    
+    .thing-repair .card-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c92a2a 100%) !important;
+        color: white;
+    }
+    
+    .thing-work .card-header {
+        background: linear-gradient(135deg, #ffc107 0%, #fab005 100%) !important;
+        color: #212529;
+    }
+</style>
 @endsection

@@ -12,6 +12,31 @@
         .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .dropdown-menu { max-height: 400px; overflow-y: auto; }
         
+        /* Стиль для активной вкладки */
+        .nav-link.active {
+            background-color: rgba(255,255,255,0.2) !important;
+            border-radius: 5px;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 15px;
+            right: 15px;
+            height: 3px;
+            background: linear-gradient(90deg, #4dabf7, #228be6);
+            border-radius: 3px;
+        }
+        
+        .dropdown-item.active {
+            background-color: #007bff !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        
         /* Стили для выделения вещей пользователя */
         .my-thing-row {
             background-color: #e8f5e9 !important;
@@ -113,134 +138,179 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <i class="fas fa-box"></i> Storage of Things
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                @auth
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('dashboard') }}">
-                            <i class="fas fa-tachometer-alt"></i> Панель
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('archived.index') }}">
-                            <i class="fas fa-archive"></i> Архив
-                        </a>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="thingsDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-cube"></i> Вещи
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="thingsDropdown">
-                            <li><a class="dropdown-item" href="{{ route('things.index') }}">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ route('dashboard') }}">
+            <i class="fas fa-box"></i> Storage of Things
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            @auth
+            <ul class="navbar-nav me-auto">
+                {{-- Панель --}}
+                <li class="nav-item">
+                    <a class="nav-link @navactive('dashboard')" href="{{ route('dashboard') }}">
+                        <i class="fas fa-tachometer-alt"></i> Панель
+                    </a>
+                </li>
+                
+                {{-- Архив --}}
+                <li class="nav-item">
+                    <a class="nav-link @navactive('archived.*')" href="{{ route('archived.index') }}">
+                        <i class="fas fa-archive"></i> Архив
+                    </a>
+                </li>
+                
+                {{-- Вещи - Dropdown --}}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle @navactive('things.*')" 
+                       href="#" id="thingsDropdown" role="button" data-bs-toggle="dropdown" 
+                       aria-expanded="false">
+                        <i class="fas fa-cube"></i> Вещи
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="thingsDropdown">
+                        {{-- Общий список --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.index')" href="{{ route('things.index') }}">
                                 <i class="fas fa-list"></i> Общий список
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ route('things.my') }}">
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        
+                        {{-- Мои вещи --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.my')" href="{{ route('things.my') }}">
                                 <i class="fas fa-user"></i> Мои вещи
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('things.used') }}">
+                            </a>
+                        </li>
+                        
+                        {{-- Мои вещи, используемые другими --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.used')" href="{{ route('things.used') }}">
                                 <i class="fas fa-users"></i> Мои вещи, используемые другими
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ route('things.repair') }}">
+                            </a>
+                        </li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        
+                        {{-- Вещи в ремонте/мойке --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.repair')" href="{{ route('things.repair') }}">
                                 <i class="fas fa-tools"></i> Вещи в ремонте/мойке
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('things.work') }}">
+                            </a>
+                        </li>
+                        
+                        {{-- Вещи в работе --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.work')" href="{{ route('things.work') }}">
                                 <i class="fas fa-briefcase"></i> Вещи в работе
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('things.borrowed') }}">
+                            </a>
+                        </li>
+                        
+                        {{-- Взятые мной вещи --}}
+                        <li>
+                            <a class="dropdown-item @navactive('things.borrowed')" href="{{ route('things.borrowed') }}">
                                 <i class="fas fa-handshake"></i> Взятые мной вещи
-                            </a></li>
-                            @can('viewAll', App\Models\Thing::class)
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ route('things.admin.all') }}">
+                            </a>
+                        </li>
+                        
+                        {{-- Все вещи (админ) --}}
+                        @can('viewAll', App\Models\Thing::class)
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
                                 <i class="fas fa-eye"></i> Все вещи (админ)
-                            </a></li>
-                            @endcan
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('places.index') }}">
-                            <i class="fas fa-warehouse"></i> Места
-                        </a>
-                    </li>
-                    
-                    @include('components.notifications')
-                    
-                    @can('admin')
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-warning" href="#" id="adminDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-crown"></i> Админ
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                            <li><a class="dropdown-item" href="{{ route('things.admin.all') }}">
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                
+                {{-- Места --}}
+                <li class="nav-item">
+                    <a class="nav-link @navactive('places.*')" href="{{ route('places.index') }}">
+                        <i class="fas fa-warehouse"></i> Места
+                    </a>
+                </li>
+                
+                @include('components.notifications')
+                
+                {{-- Админ --}}
+                @can('admin')
+                <li class="nav-item dropdown">
+                    {{-- Для админ меню проверяем несколько маршрутов через OR --}}
+                    <a class="nav-link dropdown-toggle text-warning @navactive('things.admin.all') @navactive('places.create') @navactive('places.index')" 
+                       href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" 
+                       aria-expanded="false">
+                        <i class="fas fa-crown"></i> Админ
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                        <li>
+                            <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
                                 <i class="fas fa-eye"></i> Просмотр всех вещей
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('places.create') }}">
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item @navactive('places.create')" href="{{ route('places.create') }}">
                                 <i class="fas fa-plus"></i> Добавить место
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('places.index') }}">
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item @navactive('places.index')" href="{{ route('places.index') }}">
                                 <i class="fas fa-edit"></i> Управление местами
-                            </a></li>
-                        </ul>
-                    </li>
-                    @endcan
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
-                            @if(Auth::user()->isAdmin())
-                                <span class="badge bg-warning">Admin</span>
-                            @endif
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="fas fa-sign-out-alt"></i> Выйти
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-                @endauth
-                
-                @guest
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('login') }}">
-                            <i class="fas fa-sign-in-alt"></i> Войти
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('register') }}">
-                            <i class="fas fa-user-plus"></i> Регистрация
-                        </a>
-                    </li>
-                </ul>
-                @endguest
-            </div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endcan
+            </ul>
+            
+            {{-- Пользователь --}}
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
+                        @if(Auth::user()->isAdmin())
+                            <span class="badge bg-warning">Admin</span>
+                        @endif
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            @endauth
+            
+            {{-- Гости --}}
+            @guest
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link @navactive('login')" href="{{ route('login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @navactive('register')" href="{{ route('register') }}">
+                        <i class="fas fa-user-plus"></i> Регистрация
+                    </a>
+                </li>
+            </ul>
+            @endguest
         </div>
-    </nav>
+    </div>
+</nav>
 
     <div class="container">
         @if(session('success'))

@@ -38,6 +38,44 @@ class BladeDirectiveServiceProvider extends ServiceProvider
         Blade::directive('endmything', function () {
             return '<?php endif; ?>';
         });
+
+        Blade::directive('navactive', function ($expression) {
+            // Убираем скобки и кавычки
+            $expression = trim($expression, "() '\"");
+            
+            // Если есть запятая - значит есть второй параметр (класс)
+            if (str_contains($expression, ',')) {
+                [$route, $class] = explode(',', $expression, 2);
+                $route = trim($route, " '\"");
+                $class = trim($class, " '\"");
+            } else {
+                $route = $expression;
+                $class = 'active';
+            }
+            
+            // Проверяем, является ли это паттерном (содержит *)
+            if (str_contains($route, '*')) {
+                return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>";
+            }
+            
+            // Для конкретного маршрута
+            return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>";
+        });
+
+        Blade::directive('specialthing', function ($expression) {
+            // @specialthing($thing) - возвращает класс для стиля
+            return "<?php 
+                \$thing = {$expression};
+                if (\$thing->isInUse()) {
+                    \$place = \$thing->currentPlace();
+                    if (\$place && \$place->repair) {
+                        echo 'thing-repair';
+                    } elseif (\$place && \$place->work) {
+                        echo 'thing-work';
+                    }
+                }
+            ?>";
+        });
     }
     
     private function getOutput(string $type): string
