@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Place extends Model
 {
@@ -15,7 +16,8 @@ class Place extends Model
         'name',
         'description',
         'repair',
-        'work'
+        'work',
+        'created_by' // Добавляем поле
     ];
 
     protected $casts = [
@@ -27,5 +29,17 @@ class Place extends Model
     public function usages(): HasMany
     {
         return $this->hasMany(UseModel::class, 'place_id');
+    }
+
+    // Кто создал это место
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function isAvailable(): bool
+    {
+        // Место доступно, если оно не на ремонте и не в работе
+        return !$this->repair && !$this->work;
     }
 }

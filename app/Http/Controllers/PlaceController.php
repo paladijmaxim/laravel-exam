@@ -7,6 +7,8 @@ use App\Models\UseModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use App\Events\PlaceCreated;
+use Illuminate\Support\Facades\Auth;
 
 class PlaceController extends Controller
 {
@@ -48,12 +50,15 @@ class PlaceController extends Controller
             'work' => 'boolean',
         ]);
 
-        Place::create([
+        $place = Place::create([
             'name' => $request->name,
             'description' => $request->description,
             'repair' => $request->has('repair'),
             'work' => $request->has('work'),
         ]);
+
+        // ОТПРАВЛЯЕМ СОБЫТИЕ В PUSHER ВСЕМ ПОЛЬЗОВАТЕЛЯМ
+        broadcast(new PlaceCreated($place, Auth::user()));
 
         Cache::forget('places_all'); // Очищаем кэш
 

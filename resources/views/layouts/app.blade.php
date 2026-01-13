@@ -31,6 +31,14 @@
             background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         }
         
+        .pusher-notification.place-notification {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        }
+        
+        .pusher-notification.place-creator {
+            background: linear-gradient(135deg, #20c997 0%, #17a589 100%);
+        }
+        
         .pusher-notification.fade-out {
             animation: fadeOut 0.5s ease forwards;
         }
@@ -44,10 +52,21 @@
             from { opacity: 1; }
             to { opacity: 0; transform: translateX(100%); }
         }
+        
+        /* Бейджи для типов мест */
+        .place-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+        .badge-repair { background: #dc3545; }
+        .badge-work { background: #ffc107; color: #000; }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
                 <i class="fas fa-box"></i> Storage of Things
@@ -233,7 +252,12 @@
         console.error('⚠️ Pusher Error:', err);
     });
 
-    // Подписка на канал
+    // ============================================
+    // КАНАЛ ДЛЯ ВЕЩЕЙ (THINGS)
+    // ============================================
+    
+    // Подписка на канал things
+    console.log('📡 Subscribing to channel: things');
     const channel = pusher.subscribe('things');
     
     // Проверка подписки
@@ -252,22 +276,22 @@
         console.log('Current user_id:', CURRENT_USER_ID);
         
         // ВСЕГДА показываем уведомление, проверяем кто создатель
-        showNotification(data);
+        showThingNotification(data);
     });
     
     // Слушаем ВСЕ события для дебага
     channel.bind_global(function(eventName, data) {
         if (!eventName.includes('pusher:')) {
-            console.log('🌐 Global event received:', eventName, data);
+            console.log('🌐 Global event (things):', eventName, data);
         }
     });
 
-    // Функция показа уведомления
-    function showNotification(data) {
+    // Функция показа уведомления о вещи
+    function showThingNotification(data) {
         // Проверяем, создатель ли это текущий пользователь
         const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
         
-        console.log('Is creator?', isCreator);
+        console.log('Is thing creator?', isCreator);
         
         const notification = document.createElement('div');
         notification.className = 'pusher-notification';
@@ -291,11 +315,11 @@
                     `<strong>${data.user_name}</strong> создал(а) вещь:`
                 }
             </p>
-            <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 16px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 16px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 5px;">
                 "${data.thing_name}"
             </p>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <small>${data.time || 'Только что'}</small>
+                <small><i class="far fa-clock"></i> ${data.time || 'Только что'}</small>
                 <a href="${data.url}" class="btn btn-sm ${isCreator ? 'btn-info' : 'btn-light'}" 
                    style="text-decoration: none;">
                     ${isCreator ? 'Перейти к вещи' : 'Посмотреть'} 
@@ -316,6 +340,133 @@
                 }
             }, 500);
         }, 5000);
+        
+        // Воспроизводим звук уведомления
+        playNotificationSound();
+    }
+    
+    // ============================================
+    // КАНАЛ ДЛЯ МЕСТ ХРАНЕНИЯ (PLACES)
+    // ============================================
+    
+    // Подписка на канал places
+    console.log('📡 Subscribing to channel: places');
+    const placesChannel = pusher.subscribe('places');
+    
+    // Проверка подписки на канал places
+    placesChannel.bind('pusher:subscription_succeeded', function() {
+        console.log('✅ Subscribed to channel: places');
+    });
+    
+    placesChannel.bind('pusher:subscription_error', function(err) {
+        console.error('❌ Places subscription error:', err);
+    });
+    
+    // Обработка события создания места
+    placesChannel.bind('place.created', function(data) {
+        console.log('🏢 EVENT RECEIVED: place.created', data);
+        console.log('Creator user_id:', data.user_id);
+        console.log('Current user_id:', CURRENT_USER_ID);
+        
+        // Показываем уведомление всем пользователям
+        showPlaceNotification(data);
+    });
+    
+    // Слушаем ВСЕ события на канале places для дебага
+    placesChannel.bind_global(function(eventName, data) {
+        if (!eventName.includes('pusher:')) {
+            console.log('🌐 Places global event:', eventName, data);
+        }
+    });
+    
+    // Функция показа уведомления о создании места
+    function showPlaceNotification(data) {
+        // Проверяем, создатель ли это текущий пользователь
+        const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
+        
+        console.log('Is place creator?', isCreator);
+        
+        // Определяем иконку и бейдж в зависимости от типа места
+        let iconClass = 'fa-warehouse'; // По умолчанию обычное место
+        let badgeHTML = '';
+        
+        if (data.is_repair) {
+            iconClass = 'fa-tools';
+            badgeHTML = '<span class="place-badge badge-repair">🔧 Ремонт</span>';
+        } else if (data.is_work) {
+            iconClass = 'fa-briefcase';
+            badgeHTML = '<span class="place-badge badge-work">💼 Работа</span>';
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = 'pusher-notification';
+        
+        // Разный цвет для создателя и других пользователей
+        if (isCreator) {
+            notification.classList.add('place-creator');
+        } else {
+            notification.classList.add('place-notification');
+        }
+        
+        // Заголовок в зависимости от того, кто создал
+        let title = isCreator ? '✅ Вы создали место!' : '🏢 Новое место хранения!';
+        let message = isCreator 
+            ? 'Вы успешно создали место хранения:' 
+            : `<strong>${data.user_name}</strong> создал(а) место:`;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center;">
+                    <i class="fas ${isCreator ? 'fa-user-check' : iconClass}" 
+                       style="font-size: 22px; margin-right: 12px;"></i>
+                    <h5 style="margin: 0; font-weight: bold; font-size: 16px;">
+                        ${title}
+                    </h5>
+                </div>
+                ${badgeHTML}
+            </div>
+            
+            <p style="margin: 0 0 8px 0; font-size: 14px;">
+                ${message}
+            </p>
+            
+            <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid rgba(255,255,255,0.3);">
+                <p style="margin: 0; font-weight: bold; font-size: 16px;">
+                    "${data.place_name}"
+                </p>
+            </div>
+            
+            ${data.description && data.description !== 'Без описания' 
+                ? `<div style="margin: 10px 0; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; display: flex; align-items: flex-start;">
+                    <i class="fas fa-info-circle mt-1" style="margin-right: 8px;"></i>
+                    <span>${data.description}</span>
+                   </div>`
+                : ''
+            }
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 12px; opacity: 0.9;">
+                    <i class="far fa-clock"></i> ${data.time || 'Только что'}
+                </div>
+                <a href="${data.url}" class="btn btn-sm ${isCreator ? 'btn-success' : 'btn-light'}" 
+                   style="text-decoration: none; font-weight: 600; padding: 5px 15px;">
+                    Перейти <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        `;
+        
+        // Добавляем на страницу
+        document.body.appendChild(notification);
+        
+        // Удаляем через 7 секунд
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 7000);
         
         // Воспроизводим звук уведомления
         playNotificationSound();
@@ -345,9 +496,9 @@
         }
     }
     
-    // Тестовая функция для проверки (только для админов)
+    // Тестовая функция для проверки вещей (только для админов)
     @if(Auth::check() && Auth::user()->isAdmin())
-    function testNotification() {
+    function testThingNotification() {
         const testData = {
             thing_id: 999,
             thing_name: 'Тестовая вещь',
@@ -356,25 +507,54 @@
             url: '#',
             time: new Date().toLocaleTimeString()
         };
-        showNotification(testData);
+        showThingNotification(testData);
     }
     
-    // Добавляем тестовую кнопку для админов
+    // Тестовая функция для проверки мест (только для админов)
+    function testPlaceNotification() {
+        const testData = {
+            place_id: 999,
+            place_name: 'Тестовое складское помещение',
+            user_id: {{ Auth::id() }},
+            user_name: '{{ Auth::user()->name }}',
+            description: 'Тестовое описание для проверки уведомлений',
+            url: '#',
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            is_repair: false,
+            is_work: true
+        };
+        showPlaceNotification(testData);
+    }
+    
+    // Добавляем тестовые кнопки для админов
     document.addEventListener('DOMContentLoaded', function() {
-        const testBtn = document.createElement('button');
-        testBtn.innerHTML = '<i class="fas fa-bell"></i> Тест уведомления';
-        testBtn.className = 'btn btn-warning btn-sm';
-        testBtn.style.position = 'fixed';
-        testBtn.style.bottom = '20px';
-        testBtn.style.right = '20px';
-        testBtn.style.zIndex = '9998';
-        testBtn.onclick = testNotification;
-        document.body.appendChild(testBtn);
+        // Кнопка для теста вещей
+        const testThingBtn = document.createElement('button');
+        testThingBtn.innerHTML = '<i class="fas fa-cube"></i> Тест вещи';
+        testThingBtn.className = 'btn btn-warning btn-sm';
+        testThingBtn.style.position = 'fixed';
+        testThingBtn.style.bottom = '60px';
+        testThingBtn.style.right = '20px';
+        testThingBtn.style.zIndex = '9998';
+        testThingBtn.onclick = testThingNotification;
+        document.body.appendChild(testThingBtn);
+        
+        // Кнопка для теста мест
+        const testPlaceBtn = document.createElement('button');
+        testPlaceBtn.innerHTML = '<i class="fas fa-warehouse"></i> Тест места';
+        testPlaceBtn.className = 'btn btn-info btn-sm';
+        testPlaceBtn.style.position = 'fixed';
+        testPlaceBtn.style.bottom = '100px';
+        testPlaceBtn.style.right = '20px';
+        testPlaceBtn.style.zIndex = '9998';
+        testPlaceBtn.onclick = testPlaceNotification;
+        document.body.appendChild(testPlaceBtn);
     });
     @endif
     
     // Экспортируем функции для глобального использования
-    window.showNotification = showNotification;
+    window.showThingNotification = showThingNotification;
+    window.showPlaceNotification = showPlaceNotification;
     </script>
     
     @stack('scripts')

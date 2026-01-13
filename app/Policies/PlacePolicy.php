@@ -19,7 +19,7 @@ class PlacePolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     public function update(User $user, Place $place): bool

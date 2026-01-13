@@ -3,44 +3,6 @@
 @section('title', 'Панель управления')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary">
-            <div class="card-body">
-                <h5 class="card-title">Мои вещи</h5>
-                <h2 class="card-text">{{ $stats['my_things'] }}</h2>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <h5 class="card-title">Взятые вещи</h5>
-                <h2 class="card-text">{{ $stats['borrowed_things'] }}</h2>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <h5 class="card-title">Всего мест</h5>
-                <h2 class="card-text">{{ $stats['total_places'] }}</h2>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <h5 class="card-title">Доступные места</h5>
-                <h2 class="card-text">{{ $stats['available_places'] }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="row">
     <div class="col-md-6">
         <div class="card">
