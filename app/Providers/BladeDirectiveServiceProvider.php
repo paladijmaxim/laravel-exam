@@ -62,18 +62,11 @@ class BladeDirectiveServiceProvider extends ServiceProvider
             return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>";
         });
 
-        Blade::directive('specialthing', function ($expression) {
-            // @specialthing($thing) - возвращает класс для стиля
-            return "<?php 
-                \$thing = {$expression};
-                if (\$thing->isInUse()) {
-                    \$place = \$thing->currentPlace();
-                    if (\$place && \$place->repair) {
-                        echo 'thing-repair';
-                    } elseif (\$place && \$place->work) {
-                        echo 'thing-work';
-                    }
-                }
+        Blade::directive('specialthing', function ($thing) {
+            return "<?php
+                \$status = {$thing}->isInSpecialPlace();
+                if (\$status === 'repair') echo 'thing-repair';
+                elseif (\$status === 'work') echo 'thing-work';
             ?>";
         });
     }

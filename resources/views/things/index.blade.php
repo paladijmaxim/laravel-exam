@@ -15,67 +15,80 @@
 
     @if($things->count() > 0)
     <div class="row">
-        @foreach($things as $thing)
-            <div class="col-md-4 mb-4">
-                {{-- ДОБАВЛЯЕМ НОВУЮ ДИРЕКТИВУ СПЕЦИАЛЬНЫХ МЕСТ --}}
-                <div class="card h-100 @specialthing($thing)" @mything($thing, 'style')>
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-cube @mything($thing, 'icon')"></i> 
-                            {{ $thing->name }}
-                            @mything($thing, 'badge')
-                        </h5>
-                    </div>
-                    
-                    <div class="card-body @mything($thing, 'class')">
-                        <p class="card-text text-muted">
-                            {{ $thing->description ?: 'Нет описания' }}
-                        </p>
+    @foreach($things as $thing)
+        <div class="col-md-4 mb-4">
+            {{-- ДИРЕКТИВА ДЛЯ СПЕЦИАЛЬНЫХ МЕСТ --}}
+            <div class="card h-100 @specialthing($thing)" @mything($thing, 'style')>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cube @mything($thing, 'icon')"></i> 
+                        {{ $thing->name }}
+                        @mything($thing, 'badge')
                         
-                        <ul class="list-unstyled">
-                            <li>
-                                <strong>Владелец:</strong> 
-                                @mything($thing)
-                                    <span class="text-success fw-bold">
-                                        <i class="fas fa-user-check"></i> Вы
-                                    </span>
-                                @else
-                                    {{ $thing->owner->name }}
-                                @endmything
-                            </li>
-                            <li>
-                                <strong>Гарантия:</strong> 
-                                {{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : 'нет' }}
-                            </li>
-                        </ul>
-                    </div>
+                        {{-- Бейдж для специальных мест --}}
+                        @php
+                            $status = $thing->isInSpecialPlace();
+                        @endphp
+                        @if($status === 'repair')
+                            <span class="badge bg-danger ms-2"><i class="fas fa-tools"></i> Ремонт</span>
+                        @elseif($status === 'work')
+                            <span class="badge bg-warning ms-2"><i class="fas fa-briefcase"></i> Работа</span>
+                        @endif
+                    </h5>
+                </div>
+                
+                <div class="card-body @mything($thing, 'class')">
+                    <p class="card-text text-muted">
+                        {{ $thing->description ?: 'Нет описания' }}
+                    </p>
                     
-                    <div class="card-footer">
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ route('things.show', $thing) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            
-                            {{-- Используем как условие (без параметра) --}}
+                    <ul class="list-unstyled">
+                        <li>
+                            <strong>Владелец:</strong> 
                             @mything($thing)
-                                <div class="btn-group">
-                                    <a href="{{ route('things.edit', $thing) }}" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" 
-                                                onclick="return confirm('Удалить?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                                <span class="text-success fw-bold">
+                                    <i class="fas fa-user-check"></i> Вы
+                                </span>
+                            @else
+                                {{ $thing->owner->name }}
                             @endmything
-                        </div>
+                        </li>
+                        <li>
+                            <strong>Место:</strong>
+                            @if($thing->isInUse() && $thing->currentPlace())
+                                {{ $thing->currentPlace()->name }}
+                            @else
+                                <span class="text-muted">Не используется</span>
+                            @endif
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('things.show', $thing) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        
+                        @mything($thing)
+                            <div class="btn-group">
+                                <a href="{{ route('things.edit', $thing) }}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('Удалить?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @endmything
                     </div>
                 </div>
             </div>
-        @endforeach
+        </div>
+    @endforeach
     </div>
     @endif
 </div>

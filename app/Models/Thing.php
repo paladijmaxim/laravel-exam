@@ -72,6 +72,29 @@ class Thing extends Model
         return $this->isInUse();
     }
 
+    public function isInSpecialPlace(): string
+{
+    if (!$this->isInUse()) {
+        return '';
+    }
+    
+    $place = $this->currentPlace();
+    
+    if (!$place) {
+        return '';
+    }
+    
+    if ($place->repair) {
+        return 'repair';
+    }
+    
+    if ($place->work) {
+        return 'work';
+    }
+    
+    return '';
+}
+
     /**
      * Boot method для архивации при удалении
      */

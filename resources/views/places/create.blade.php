@@ -37,30 +37,34 @@
                             <div class="col-md-6 mb-3">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="repair" name="repair" 
-                                           {{ old('repair') ? 'checked' : '' }}>
+                                           value="1" {{ old('repair') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="repair">
                                         <i class="fas fa-tools"></i> Место на ремонте/мойке
                                     </label>
                                 </div>
-                                <div class="form-text">Вещи в этом месте будут отмечены как находящиеся в ремонте</div>
+                                <div class="form-text">Вещи в этом месте будут отмечены красным цветом</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="work" name="work" 
-                                           {{ old('work') ? 'checked' : '' }}>
+                                           value="1" {{ old('work') ? 'checked' : '' }}>
                                     <label class="form-check-label" for="work">
                                         <i class="fas fa-briefcase"></i> Место в работе
                                     </label>
                                 </div>
-                                <div class="form-text">Вещи в этом месте будут отмечены как находящиеся в работе</div>
+                                <div class="form-text">Вещи в этом месте будут отмечены оранжевым цветом</div>
                             </div>
                         </div>
                         
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i>
-                            Если место отмечено как "ремонт" или "работа", вещи в нем будут попадать 
-                            в соответствующие разделы фильтрации.
+                            <strong>Важно:</strong> Вещи, которые будут помещены в это место, автоматически получат 
+                            соответствующее цветовое выделение в списке:
+                            <ul class="mb-0 mt-2">
+                                <li><span class="badge bg-danger">Ремонт</span> - красная рамка</li>
+                                <li><span class="badge bg-warning">Работа</span> - оранжевая рамка</li>
+                            </ul>
                         </div>
                         
                         <div class="d-flex justify-content-between">

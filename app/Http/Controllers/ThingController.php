@@ -50,6 +50,7 @@ class ThingController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'wrnt' => 'nullable|date',
+            'place_id' => 'nullable|exists:places,id',
         ]);
 
         $thing = Thing::create([
@@ -59,6 +60,16 @@ class ThingController extends Controller
             'master' => Auth::id(),
         ]);
 
+        if ($request->place_id) {
+            UseModel::create([
+                'thing_id' => $thing->id,
+                'user_id' => Auth::id(),
+                'place_id' => $request->place_id,
+                'amount' => 1, // или нужное количество
+                'unit_id' => 1, // или другой unit
+            ]);
+        }
+        
         // ОТПРАВКА СОБЫТИЯ В PUSHER
         broadcast(new ThingCreated($thing, Auth::user()));
 
