@@ -27,6 +27,10 @@
             animation: slideIn 0.3s ease;
         }
         
+        .pusher-notification.creator {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+        
         .pusher-notification.fade-out {
             animation: fadeOut 0.5s ease forwards;
         }
@@ -43,8 +47,7 @@
     </style>
 </head>
 <body>
-    <!-- Ваша навигация остается без изменений -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ route('dashboard') }}">
                 <i class="fas fa-box"></i> Storage of Things
@@ -68,48 +71,32 @@
                         </a>
                     </li>
                     
-                    <!-- ВКЛАДКА С ВЫПАДАЮЩИМ СПИСКОМ (ЗАДАНИЕ 1) -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="thingsDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-cube"></i> Вещи
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="thingsDropdown">
-                            <!-- Общий список -->
                             <li><a class="dropdown-item" href="{{ route('things.index') }}">
                                 <i class="fas fa-list"></i> Общий список
                             </a></li>
-                            
                             <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- Вещи аутентифицированного пользователя -->
                             <li><a class="dropdown-item" href="{{ route('things.my') }}">
                                 <i class="fas fa-user"></i> Мои вещи
                             </a></li>
-                            
-                            <!-- Личные вещи, которые используются другими пользователями -->
                             <li><a class="dropdown-item" href="{{ route('things.used') }}">
                                 <i class="fas fa-users"></i> Мои вещи, используемые другими
                             </a></li>
-                            
                             <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- Вещи в специальных местах (Repair things) -->
                             <li><a class="dropdown-item" href="{{ route('things.repair') }}">
                                 <i class="fas fa-tools"></i> Вещи в ремонте/мойке
                             </a></li>
-                            
-                            <!-- Вещи в работе (Work) -->
                             <li><a class="dropdown-item" href="{{ route('things.work') }}">
                                 <i class="fas fa-briefcase"></i> Вещи в работе
                             </a></li>
-                            
-                            <!-- Дополнительно: взятые мной вещи -->
                             <li><a class="dropdown-item" href="{{ route('things.borrowed') }}">
                                 <i class="fas fa-handshake"></i> Взятые мной вещи
                             </a></li>
-                            
-                            <!-- Для администратора -->
                             @can('viewAll', App\Models\Thing::class)
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('things.admin.all') }}">
@@ -125,11 +112,8 @@
                         </a>
                     </li>
                     
-                    @auth
-                        @include('components.notifications')
-                    @endauth
-
-                    <!-- Панель администратора -->
+                    @include('components.notifications')
+                    
                     @can('admin')
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-warning" href="#" id="adminDropdown" role="button" 
@@ -216,38 +200,106 @@
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     
     <script>
+    // Получаем ID текущего пользователя из Laravel
+    const CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
+    
     // Инициализация Pusher
     const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
         cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
-        forceTLS: true
+        forceTLS: true,
+        enabledTransports: ['ws', 'wss'] // Явно указываем транспорт
+    });
+    
+    // Дебаг логирование
+    console.log('=== PUSHER INIT ===');
+    console.log('Current User ID:', CURRENT_USER_ID);
+    console.log('Pusher Key:', '{{ env("PUSHER_APP_KEY") }}');
+    console.log('Pusher Cluster:', '{{ env("PUSHER_APP_CLUSTER") }}');
+    
+    // Обработчики состояния подключения
+    pusher.connection.bind('connecting', function() {
+        console.log('🔌 Pusher: Connecting...');
+    });
+    
+    pusher.connection.bind('connected', function() {
+        console.log('✅ Pusher: Connected! Socket ID:', pusher.connection.socket_id);
+    });
+    
+    pusher.connection.bind('disconnected', function() {
+        console.log('❌ Pusher: Disconnected');
+    });
+    
+    pusher.connection.bind('error', function(err) {
+        console.error('⚠️ Pusher Error:', err);
     });
 
     // Подписка на канал
     const channel = pusher.subscribe('things');
+    
+    // Проверка подписки
+    channel.bind('pusher:subscription_succeeded', function() {
+        console.log('✅ Subscribed to channel: things');
+    });
+    
+    channel.bind('pusher:subscription_error', function(err) {
+        console.error('❌ Subscription error:', err);
+    });
 
     // Обработка события создания вещи
     channel.bind('thing.created', function(data) {
-        // Показываем уведомление
+        console.log('🎯 EVENT RECEIVED: thing.created', data);
+        console.log('Creator user_id:', data.user_id);
+        console.log('Current user_id:', CURRENT_USER_ID);
+        
+        // ВСЕГДА показываем уведомление, проверяем кто создатель
         showNotification(data);
+    });
+    
+    // Слушаем ВСЕ события для дебага
+    channel.bind_global(function(eventName, data) {
+        if (!eventName.includes('pusher:')) {
+            console.log('🌐 Global event received:', eventName, data);
+        }
     });
 
     // Функция показа уведомления
     function showNotification(data) {
+        // Проверяем, создатель ли это текущий пользователь
+        const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
+        
+        console.log('Is creator?', isCreator);
+        
         const notification = document.createElement('div');
         notification.className = 'pusher-notification';
+        
+        // Добавляем класс creator если это создатель
+        if (isCreator) {
+            notification.classList.add('creator');
+        }
+        
         notification.innerHTML = `
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <i class="fas fa-check-circle" style="font-size: 20px; margin-right: 10px;"></i>
-                <h5 style="margin: 0; font-weight: bold;">🎉 Новая вещь!</h5>
+                <i class="fas ${isCreator ? 'fa-user-check' : 'fa-check-circle'}" 
+                   style="font-size: 20px; margin-right: 10px;"></i>
+                <h5 style="margin: 0; font-weight: bold;">
+                    ${isCreator ? '✅ Вы создали вещь!' : '🎉 Новая вещь!'}
+                </h5>
             </div>
             <p style="margin: 0 0 5px 0;">
-                <strong>${data.user_name}</strong> создал(а) вещь:
+                ${isCreator ? 
+                    'Вы успешно создали вещь:' : 
+                    `<strong>${data.user_name}</strong> создал(а) вещь:`
+                }
             </p>
-            <p style="margin: 0 0 10px 0; font-weight: bold;">"${data.thing_name}"</p>
+            <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 16px;">
+                "${data.thing_name}"
+            </p>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <small>${data.time}</small>
-                <a href="${data.url}" class="btn btn-sm btn-light" style="text-decoration: none;">
-                    Посмотреть <i class="fas fa-arrow-right"></i>
+                <small>${data.time || 'Только что'}</small>
+                <a href="${data.url}" class="btn btn-sm ${isCreator ? 'btn-info' : 'btn-light'}" 
+                   style="text-decoration: none;">
+                    ${isCreator ? 'Перейти к вещи' : 'Посмотреть'} 
+                    <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         `;
@@ -258,19 +310,71 @@
         // Удаляем через 5 секунд
         setTimeout(() => {
             notification.classList.add('fade-out');
-            setTimeout(() => notification.remove(), 500);
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
         }, 5000);
+        
+        // Воспроизводим звук уведомления
+        playNotificationSound();
     }
     
-    // Обработка ошибок подключения
-    pusher.connection.bind('error', function(err) {
-        console.error('Pusher connection error:', err);
-    });
+    // Функция воспроизведения звука уведомления
+    function playNotificationSound() {
+        try {
+            // Создаем короткий звук уведомления
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        } catch (e) {
+            console.log('Не удалось воспроизвести звук:', e);
+        }
+    }
     
-    // Обработка успешного подключения
-    pusher.connection.bind('connected', function() {
-        console.log('Pusher connected');
+    // Тестовая функция для проверки (только для админов)
+    @if(Auth::check() && Auth::user()->isAdmin())
+    function testNotification() {
+        const testData = {
+            thing_id: 999,
+            thing_name: 'Тестовая вещь',
+            user_id: {{ Auth::id() }},
+            user_name: '{{ Auth::user()->name }}',
+            url: '#',
+            time: new Date().toLocaleTimeString()
+        };
+        showNotification(testData);
+    }
+    
+    // Добавляем тестовую кнопку для админов
+    document.addEventListener('DOMContentLoaded', function() {
+        const testBtn = document.createElement('button');
+        testBtn.innerHTML = '<i class="fas fa-bell"></i> Тест уведомления';
+        testBtn.className = 'btn btn-warning btn-sm';
+        testBtn.style.position = 'fixed';
+        testBtn.style.bottom = '20px';
+        testBtn.style.right = '20px';
+        testBtn.style.zIndex = '9998';
+        testBtn.onclick = testNotification;
+        document.body.appendChild(testBtn);
     });
+    @endif
+    
+    // Экспортируем функции для глобального использования
+    window.showNotification = showNotification;
     </script>
     
     @stack('scripts')

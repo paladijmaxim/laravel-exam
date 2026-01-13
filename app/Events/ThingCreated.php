@@ -43,6 +43,7 @@ class ThingCreated implements ShouldBroadcast
         return [
             'thing_id' => $this->thing->id,
             'thing_name' => $this->thing->name,
+            'user_id' => $this->user->id, // ДОБАВЛЕНО!
             'user_name' => $this->user->name,
             'url' => route('things.show', $this->thing),
             'time' => now()->format('H:i'),
