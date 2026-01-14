@@ -32,22 +32,25 @@
                         <td>{{ $thing->owner->name }}</td>
                         <td>{{ $thing->wrnt ? $thing->wrnt->format('d.m.Y') : '—' }}</td>
                         <td>
-                            @if($thing->currentUser())
-                                {{ $thing->currentUser()->name }}
+                            @if($thing->latest_user)
+                                {{ $thing->latest_user->name }}
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
-                            @if($thing->currentPlace())
-                                {{ $thing->currentPlace()->name }}
+                            @if($thing->latest_place)
+                                {{ $thing->latest_place->name }}
                             @else
                                 <span class="text-muted">—</span>
                             @endif
                         </td>
                         <td>
-                            @if($thing->currentUsage())
-                                {{ $thing->currentUsage()->formatted_amount }}
+                            @if($thing->latest_usage)
+                                {{ $thing->latest_usage->amount }}
+                                @if($thing->latest_usage->unit)
+                                    {{ $thing->latest_usage->unit->abbreviation }}
+                                @endif
                             @else
                                 <span class="text-muted">—</span>
                             @endif
@@ -63,8 +66,19 @@
         </table>
     </div>
 
-    <div class="d-flex justify-content-center">
-        {{ $things->links() }}
-    </div>
+    @if($things->hasPages())
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+                    {{-- Показываем только номера страниц --}}
+                    @for ($page = 1; $page <= $things->lastPage(); $page++)
+                        <li class="page-item {{ $things->currentPage() == $page ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $things->url($page) }}">{{ $page }}</a>
+                        </li>
+                    @endfor
+                </ul>
+            </nav>
+        </div>
+    @endif
 </div>
 @endsection

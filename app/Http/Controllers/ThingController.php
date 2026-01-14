@@ -210,19 +210,35 @@ class ThingController extends Controller
     }
 
     public function all()
-    {
-        $this->authorize('viewAll', Thing::class);
-        
-        $things = Cache::remember('things_admin_all', 300, function () {
-            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
-                $query->where('is_current', true);
-            }])
-            ->latest()
-            ->paginate(20);
-        });
-        
-        return view('things.admin-all', compact('things'));
-    }
+{
+    $this->authorize('viewAll', Thing::class);
+    
+    // Убрал кэширование для пагинации, так как оно может вызывать проблемы
+    $things = Thing::with([
+        'owner',
+        'usages' => function($query) {
+            $query->latest()->limit(1);
+        },
+        'usages.user',
+        'usages.place',
+        'usages.unit',
+        'descriptions' => function($query) {
+            $query->where('is_current', true);
+        }
+    ])
+    ->latest()
+    ->paginate(20);
+    
+    // Добавляем удобные отношения для представления
+    $things->each(function($thing) {
+        $thing->latest_usage = $thing->usages->first();
+        $thing->latest_user = $thing->latest_usage?->user;
+        $thing->latest_place = $thing->latest_usage?->place;
+        $thing->latest_unit = $thing->latest_usage?->unit;
+    });
+    
+    return view('things.admin-all', compact('things'));
+}
 
     public function addDescription(Request $request, Thing $thing)
     {
