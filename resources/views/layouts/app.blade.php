@@ -12,7 +12,6 @@
         .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .dropdown-menu { max-height: 400px; overflow-y: auto; }
         
-        /* Стиль для активной вкладки */
         .nav-link.active {
             background-color: rgba(255,255,255,0.2) !important;
             border-radius: 5px;
@@ -37,7 +36,6 @@
             font-weight: bold;
         }
         
-        /* Стили для выделения вещей пользователя */
         .my-thing-row {
             background-color: #e8f5e9 !important;
             border-left: 4px solid #28a745 !important;
@@ -84,7 +82,6 @@
             animation: myThingPulse 2s infinite;
         }
 
-        /* Стиль для уведомлений */
         .pusher-notification {
             position: fixed;
             top: 20px;
@@ -125,7 +122,6 @@
             to { opacity: 0; transform: translateX(100%); }
         }
         
-        /* Бейджи для типов мест */
         .place-badge {
             font-size: 11px;
             padding: 2px 8px;
@@ -151,21 +147,18 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             @auth
             <ul class="navbar-nav me-auto">
-                {{-- Панель --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('dashboard')" href="{{ route('dashboard') }}">
                          Главная
                     </a>
                 </li>
                 
-                {{-- Архив --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('archived.*')" href="{{ route('archived.index') }}">
                          Архив
                     </a>
                 </li>
                 
-                {{-- Вещи - Dropdown --}}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle @navactive('things.*')" 
                        href="#" id="thingsDropdown" role="button" data-bs-toggle="dropdown" 
@@ -173,7 +166,6 @@
                          Вещи
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="thingsDropdown">
-                        {{-- Общий список --}}
                         <li>
                             <a class="dropdown-item @navactive('things.index')" href="{{ route('things.index') }}">
                                  Общий список
@@ -181,14 +173,12 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         
-                        {{-- Мои вещи --}}
                         <li>
                             <a class="dropdown-item @navactive('things.my')" href="{{ route('things.my') }}">
                                  Мои вещи
                             </a>
                         </li>
                         
-                        {{-- Мои вещи, используемые другими --}}
                         <li>
                             <a class="dropdown-item @navactive('things.used')" href="{{ route('things.used') }}">
                                  Мои вещи, используемые другими
@@ -197,28 +187,24 @@
                         
                         <li><hr class="dropdown-divider"></li>
                         
-                        {{-- Вещи в ремонте/мойке --}}
                         <li>
                             <a class="dropdown-item @navactive('things.repair')" href="{{ route('things.repair') }}">
                                  Вещи в ремонте/мойке
                             </a>
                         </li>
                         
-                        {{-- Вещи в работе --}}
                         <li>
                             <a class="dropdown-item @navactive('things.work')" href="{{ route('things.work') }}">
                                  Вещи в работе
                             </a>
                         </li>
                         
-                        {{-- Взятые мной вещи --}}
                         <li>
                             <a class="dropdown-item @navactive('things.borrowed')" href="{{ route('things.borrowed') }}">
                                  Взятые мной вещи
                             </a>
                         </li>
                         
-                        {{-- Все вещи (админ) --}}
                         @can('viewAll', App\Models\Thing::class)
                         <li><hr class="dropdown-divider"></li>
                         <li>
@@ -230,7 +216,6 @@
                     </ul>
                 </li>
                 
-                {{-- Места --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('places.*')" href="{{ route('places.index') }}">
                          Места
@@ -239,10 +224,8 @@
                 
                 @include('components.notifications')
                 
-                {{-- Админ --}}
                 @can('admin')
                 <li class="nav-item dropdown">
-                    {{-- Для админ меню проверяем несколько маршрутов через OR --}}
                     <a class="nav-link dropdown-toggle text-warning @navactive('things.admin.all') @navactive('places.create') @navactive('places.index')" 
                        href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" 
                        aria-expanded="false">
@@ -269,7 +252,6 @@
                 @endcan
             </ul>
             
-            {{-- Пользователь --}}
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
@@ -293,7 +275,6 @@
             </ul>
             @endauth
             
-            {{-- Гости --}}
             @guest
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
@@ -332,88 +313,41 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Подключаем Pusher -->
     <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
     
     <script>
-    // Получаем ID текущего пользователя из Laravel
     const CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
     
-    // Инициализация Pusher
     const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
         cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
         forceTLS: true,
-        enabledTransports: ['ws', 'wss'] // Явно указываем транспорт
-    });
-    
-    // Дебаг логирование
-    console.log('=== PUSHER INIT ===');
-    console.log('Current User ID:', CURRENT_USER_ID);
-    console.log('Pusher Key:', '{{ env("PUSHER_APP_KEY") }}');
-    console.log('Pusher Cluster:', '{{ env("PUSHER_APP_CLUSTER") }}');
-    
-    // Обработчики состояния подключения
-    pusher.connection.bind('connecting', function() {
-        console.log('🔌 Pusher: Connecting...');
+        enabledTransports: ['ws', 'wss']
     });
     
     pusher.connection.bind('connected', function() {
-        console.log('✅ Pusher: Connected! Socket ID:', pusher.connection.socket_id);
-    });
-    
-    pusher.connection.bind('disconnected', function() {
-        console.log('❌ Pusher: Disconnected');
+        console.log('Pusher connected');
     });
     
     pusher.connection.bind('error', function(err) {
-        console.error('⚠️ Pusher Error:', err);
+        console.error('Pusher error:', err);
     });
 
-    // ============================================
-    // КАНАЛ ДЛЯ ВЕЩЕЙ (THINGS)
-    // ============================================
-    
-    // Подписка на канал things
-    console.log('📡 Subscribing to channel: things');
     const channel = pusher.subscribe('things');
     
-    // Проверка подписки
     channel.bind('pusher:subscription_succeeded', function() {
-        console.log('Subscribed to channel: things');
+        console.log('Subscribed to things');
     });
     
-    channel.bind('pusher:subscription_error', function(err) {
-        console.error('Subscription error:', err);
-    });
-
-    // Обработка события создания вещи
     channel.bind('thing.created', function(data) {
-        console.log('🎯 EVENT RECEIVED: thing.created', data);
-        console.log('Creator user_id:', data.user_id);
-        console.log('Current user_id:', CURRENT_USER_ID);
-        
-        // ВСЕГДА показываем уведомление, проверяем кто создатель
         showThingNotification(data);
     });
     
-    // Слушаем ВСЕ события для дебага
-    channel.bind_global(function(eventName, data) {
-        if (!eventName.includes('pusher:')) {
-            console.log('🌐 Global event (things):', eventName, data);
-        }
-    });
-
-    // Функция показа уведомления о вещи
     function showThingNotification(data) {
-        // Проверяем, создатель ли это текущий пользователь
         const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
-        
-        console.log('Is thing creator?', isCreator);
         
         const notification = document.createElement('div');
         notification.className = 'pusher-notification';
         
-        // Добавляем класс creator если это создатель
         if (isCreator) {
             notification.classList.add('creator');
         }
@@ -445,10 +379,8 @@
             </div>
         `;
         
-        // Добавляем на страницу
         document.body.appendChild(notification);
         
-        // Удаляем через 5 секунд
         setTimeout(() => {
             notification.classList.add('fade-out');
             setTimeout(() => {
@@ -458,53 +390,27 @@
             }, 500);
         }, 5000);
         
-        // Воспроизводим звук уведомления
         playNotificationSound();
     }
     
-    // ============================================
-    // КАНАЛ ДЛЯ МЕСТ ХРАНЕНИЯ (PLACES)
-    // ============================================
-    
-    // Подписка на канал places
-    console.log('📡 Subscribing to channel: places');
     const placesChannel = pusher.subscribe('places');
     
-    // Проверка подписки на канал places
     placesChannel.bind('pusher:subscription_succeeded', function() {
-        console.log('Subscribed to channel: places');
+        console.log('Subscribed to places');
     });
     
     placesChannel.bind('pusher:subscription_error', function(err) {
         console.error('Places subscription error:', err);
     });
     
-    // Обработка события создания места
     placesChannel.bind('place.created', function(data) {
-        console.log('🏢 EVENT RECEIVED: place.created', data);
-        console.log('Creator user_id:', data.user_id);
-        console.log('Current user_id:', CURRENT_USER_ID);
-        
-        // Показываем уведомление всем пользователям
         showPlaceNotification(data);
     });
     
-    // Слушаем ВСЕ события на канале places для дебага
-    placesChannel.bind_global(function(eventName, data) {
-        if (!eventName.includes('pusher:')) {
-            console.log('🌐 Places global event:', eventName, data);
-        }
-    });
-    
-    // Функция показа уведомления о создании места
     function showPlaceNotification(data) {
-        // Проверяем, создатель ли это текущий пользователь
         const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
         
-        console.log('Is place creator?', isCreator);
-        
-        // Определяем иконку и бейдж в зависимости от типа места
-        let iconClass = 'fa-warehouse'; // По умолчанию обычное место
+        let iconClass = 'fa-warehouse';
         let badgeHTML = '';
         
         if (data.is_repair) {
@@ -518,14 +424,12 @@
         const notification = document.createElement('div');
         notification.className = 'pusher-notification';
         
-        // Разный цвет для создателя и других пользователей
         if (isCreator) {
             notification.classList.add('place-creator');
         } else {
             notification.classList.add('place-notification');
         }
         
-        // Заголовок в зависимости от того, кто создал
         let message = isCreator 
             ? 'Вы успешно создали место хранения:' 
             : `<strong>${data.user_name}</strong> создал(а) место:`;
@@ -536,7 +440,7 @@
                     <i class="fas ${isCreator ? 'fa-user-check' : iconClass}" 
                        style="font-size: 22px; margin-right: 12px;"></i>
                     <h5 style="margin: 0; font-weight: bold; font-size: 16px;">
-                        ${title}
+                        ${isCreator ? 'Вы создали место!' : 'Новое место!'}
                     </h5>
                 </div>
                 ${badgeHTML}
@@ -571,10 +475,8 @@
             </div>
         `;
         
-        // Добавляем на страницу
         document.body.appendChild(notification);
         
-        // Удаляем через 7 секунд
         setTimeout(() => {
             notification.classList.add('fade-out');
             setTimeout(() => {
@@ -584,14 +486,11 @@
             }, 500);
         }, 7000);
         
-        // Воспроизводим звук уведомления
         playNotificationSound();
     }
     
-    // Функция воспроизведения звука уведомления
     function playNotificationSound() {
         try {
-            // Создаем короткий звук уведомления
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
@@ -612,21 +511,7 @@
         }
     }
     
-    // Тестовая функция для проверки вещей (только для админов)
     @if(Auth::check() && Auth::user()->isAdmin())
-    function testThingNotification() {
-        const testData = {
-            thing_id: 999,
-            thing_name: 'Тестовая вещь',
-            user_id: {{ Auth::id() }},
-            user_name: '{{ Auth::user()->name }}',
-            url: '#',
-            time: new Date().toLocaleTimeString()
-        };
-        showThingNotification(testData);
-    }
-    
-    // Тестовая функция для проверки мест (только для админов)
     function testPlaceNotification() {
         const testData = {
             place_id: 999,
@@ -642,20 +527,7 @@
         showPlaceNotification(testData);
     }
     
-    // Добавляем тестовые кнопки для админов
     document.addEventListener('DOMContentLoaded', function() {
-        // Кнопка для теста вещей
-        const testThingBtn = document.createElement('button');
-        testThingBtn.innerHTML = '<i class="fas fa-cube"></i> Тест вещи';
-        testThingBtn.className = 'btn btn-warning btn-sm';
-        testThingBtn.style.position = 'fixed';
-        testThingBtn.style.bottom = '60px';
-        testThingBtn.style.right = '20px';
-        testThingBtn.style.zIndex = '9998';
-        testThingBtn.onclick = testThingNotification;
-        document.body.appendChild(testThingBtn);
-        
-        // Кнопка для теста мест
         const testPlaceBtn = document.createElement('button');
         testPlaceBtn.innerHTML = '<i class="fas fa-warehouse"></i> Тест места';
         testPlaceBtn.className = 'btn btn-info btn-sm';
@@ -668,7 +540,6 @@
     });
     @endif
     
-    // Экспортируем функции для глобального использования
     window.showThingNotification = showThingNotification;
     window.showPlaceNotification = showPlaceNotification;
     </script>

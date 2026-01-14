@@ -16,9 +16,6 @@ class ThingCreated implements ShouldBroadcast
 
     public $thing;
     public $user;
-
-    public $connection = 'sync';
-    public $queue = 'sync';
     
     public function __construct(Thing $thing, User $user)
     {

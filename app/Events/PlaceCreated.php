@@ -17,9 +17,6 @@ class PlaceCreated implements ShouldBroadcast
     public $place;
     public $user;
 
-    public $connection = 'sync';
-    public $queue = 'sync';
-    
     public function __construct(Place $place, User $user)
     {
         $this->place = $place;

@@ -55,12 +55,13 @@ class PlaceController extends Controller
             'description' => $request->description,
             'repair' => $request->has('repair'),
             'work' => $request->has('work'),
+            'user_id' => Auth::id(),
         ]);
-
-        // ОТПРАВЛЯЕМ СОБЫТИЕ В PUSHER ВСЕМ ПОЛЬЗОВАТЕЛЯМ
+        
+        // Отправляем событие
         broadcast(new PlaceCreated($place, Auth::user()));
 
-        Cache::forget('places_all'); // Очищаем кэш
+        Cache::forget('places_all');
 
         return redirect()->route('places.index')
             ->with('success', 'Место хранения успешно создано!');

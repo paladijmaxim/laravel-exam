@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Cache;
 
 class PlaceController extends Controller
 {
-    /**
-     * Display a listing of places
-     */
     public function index(Request $request)
     {
         // Кэширование на 5 минут
@@ -34,9 +31,6 @@ class PlaceController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created place
-     */
     public function store(Request $request)
     {
         // Проверка прав
@@ -69,9 +63,6 @@ class PlaceController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified place
-     */
     public function show($id)
     {
         $place = Place::with(['usages.thing.owner', 'usages.user', 'usages.unit'])
@@ -82,9 +73,6 @@ class PlaceController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified place
-     */
     public function update(Request $request, $id)
     {
         $place = Place::findOrFail($id);
@@ -119,9 +107,6 @@ class PlaceController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified place
-     */
     public function destroy($id)
     {
         $place = Place::findOrFail($id);
@@ -150,9 +135,6 @@ class PlaceController extends Controller
         ]);
     }
 
-    /**
-     * Get available places (not in repair or work)
-     */
     public function available()
     {
         $places = Cache::remember('places_available_api', 300, function () {
@@ -166,9 +148,6 @@ class PlaceController extends Controller
         ]);
     }
 
-    /**
-     * Get places statistics
-     */
     public function stats()
     {
         $total = Place::count();
