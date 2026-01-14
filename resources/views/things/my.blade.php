@@ -5,9 +5,9 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-user"></i> Мои вещи</h1>
+        <h1> Мои вещи</h1>
         <a href="{{ route('things.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Добавить вещь
+            Добавить вещь
         </a>
     </div>
 

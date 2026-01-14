@@ -10,10 +10,32 @@ use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\ArchivedThingController;
 use App\Http\Controllers\NotificationController;
 
-// Главная страница
+// Главная страница - ДОСТУПНА ВСЕМ
 Route::get('/', function () {
-    return view('welcome');
-});
+    // Получаем общее количество вещей
+    $totalThings = \App\Models\Thing::count();
+    
+    // Получаем последние 5 вещей для показа на welcome странице
+    $recentThings = \App\Models\Thing::with(['owner', 'usages' => function($q) {
+        $q->latest()->take(1)->with(['user', 'place']);
+    }])
+    ->whereDoesntHave('usages.place', function($q) {
+        $q->where('repair', true)->orWhere('work', true);
+    })
+    ->latest()
+    ->take(5)
+    ->get();
+    
+    return view('welcome', compact('totalThings', 'recentThings'));
+})->name('welcome');
+
+// ПУБЛИЧНЫЕ маршруты (доступны всем)
+
+// 1. Просмотр списка вещей
+Route::get('/things', [ThingController::class, 'index'])->name('things.index');
+
+// 2. Просмотр отдельной вещи
+Route::get('/things/{thing}', [ThingController::class, 'show'])->name('things.show')->where('thing', '[0-9]+');
 
 // Аутентификация
 Route::middleware('guest')->group(function () {
@@ -27,47 +49,37 @@ Route::middleware('guest')->group(function () {
 // Выход
 Route::post('/logout', [LogoutController::class, 'logout'])->name('logout');
 
-// Защищенные маршруты
+// ЗАЩИЩЕННЫЕ маршруты (только для авторизованных)
 Route::middleware('auth')->group(function () {
     // Дашборд
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Ресурсные маршруты (CRUD) - В КОНЦЕ!
-    // Route::resource('things', ThingController::class); // ЗАКОММЕНТИРУЙ ЭТУ СТРОКУ!
-    
-    // СНАЧАЛА ВСЕ КАСТОМНЫЕ МАРШРУТЫ things/*
-    // ВКЛАДКИ ИЗ ВЫПАДАЮЩЕГО СПИСКА:
-    
-    // 1. Общий список (уже есть как things.index)
-    Route::get('/things', [ThingController::class, 'index'])->name('things.index');
-    
-    // 2. Мои вещи
-    Route::get('/things/my', [ThingController::class, 'my'])->name('things.my');
-    
-    // 3. Вещи в ремонте/мойке
-    Route::get('/things/repair', [ThingController::class, 'repair'])->name('things.repair');
-    
-    // 4. Вещи в работе
-    Route::get('/things/work', [ThingController::class, 'work'])->name('things.work');
-    
-    // 5. Личные вещи, которые используются другими пользователями
-    Route::get('/things/used', [ThingController::class, 'used'])->name('things.used');
-    
-    // 6. Взятые мной вещи (дополнительно)
-    Route::get('/things/borrowed', [ThingController::class, 'borrowed'])->name('things.borrowed');
-    
-    // 7. Все вещи для администратора
-    Route::get('/things/admin/all', [ThingController::class, 'all'])->name('things.admin.all');
-    
-    // 8. Создание вещи
+    // ОПЕРАЦИИ С ВЕЩАМИ (создание, редактирование, удаление)
     Route::get('/things/create', [ThingController::class, 'create'])->name('things.create');
     Route::post('/things', [ThingController::class, 'store'])->name('things.store');
-    
-    // 9. Показ, редактирование, удаление вещи (с ограничением ID только цифрами)
-    Route::get('/things/{thing}', [ThingController::class, 'show'])->name('things.show')->where('thing', '[0-9]+');
     Route::get('/things/{thing}/edit', [ThingController::class, 'edit'])->name('things.edit')->where('thing', '[0-9]+');
     Route::put('/things/{thing}', [ThingController::class, 'update'])->name('things.update')->where('thing', '[0-9]+');
     Route::delete('/things/{thing}', [ThingController::class, 'destroy'])->name('things.destroy')->where('thing', '[0-9]+');
+    
+    // ВКЛАДКИ ИЗ ВЫПАДАЮЩЕГО СПИСКА (только для авторизованных):
+    
+    // 1. Мои вещи
+    Route::get('/things/my', [ThingController::class, 'my'])->name('things.my');
+    
+    // 2. Вещи в ремонте/мойке
+    Route::get('/things/repair', [ThingController::class, 'repair'])->name('things.repair');
+    
+    // 3. Вещи в работе
+    Route::get('/things/work', [ThingController::class, 'work'])->name('things.work');
+    
+    // 4. Личные вещи, которые используются другими пользователями
+    Route::get('/things/used', [ThingController::class, 'used'])->name('things.used');
+    
+    // 5. Взятые мной вещи
+    Route::get('/things/borrowed', [ThingController::class, 'borrowed'])->name('things.borrowed');
+    
+    // 6. Все вещи для администратора
+    Route::get('/things/admin/all', [ThingController::class, 'all'])->name('things.admin.all');
     
     // Передача вещи
     Route::get('/things/{thing}/transfer-form', [ThingController::class, 'transferForm'])
@@ -83,24 +95,21 @@ Route::middleware('auth')->group(function () {
         ->where('thing', '[0-9]+');
     
     // ОПИСАНИЯ ВЕЩЕЙ
-    // 1. Добавление нового описания
     Route::post('/things/{thing}/add-description', [ThingController::class, 'addDescription'])
         ->name('things.add-description')
         ->where('thing', '[0-9]+');
     
-    // 2. Установка текущего описания
     Route::post('/things/{thing}/set-current-description/{description}', 
         [ThingController::class, 'setCurrentDescription'])
         ->name('things.set-current-description')
         ->where('thing', '[0-9]+');
     
-    // 3. Редактирование описания
     Route::put('/things/{thing}/update-description/{description}', 
         [ThingController::class, 'updateDescription'])
         ->name('things.update-description')
         ->where('thing', '[0-9]+');
     
-    // Места хранения (ресурсный маршрут здесь нормально работает)
+    // Места хранения
     Route::resource('places', PlaceController::class);
     
     // Архив удаленных вещей

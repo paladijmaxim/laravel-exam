@@ -154,14 +154,14 @@
                 {{-- Панель --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('dashboard')" href="{{ route('dashboard') }}">
-                        <i class="fas fa-tachometer-alt"></i> Панель
+                         Главная
                     </a>
                 </li>
                 
                 {{-- Архив --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('archived.*')" href="{{ route('archived.index') }}">
-                        <i class="fas fa-archive"></i> Архив
+                         Архив
                     </a>
                 </li>
                 
@@ -170,13 +170,13 @@
                     <a class="nav-link dropdown-toggle @navactive('things.*')" 
                        href="#" id="thingsDropdown" role="button" data-bs-toggle="dropdown" 
                        aria-expanded="false">
-                        <i class="fas fa-cube"></i> Вещи
+                         Вещи
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="thingsDropdown">
                         {{-- Общий список --}}
                         <li>
                             <a class="dropdown-item @navactive('things.index')" href="{{ route('things.index') }}">
-                                <i class="fas fa-list"></i> Общий список
+                                 Общий список
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
@@ -184,14 +184,14 @@
                         {{-- Мои вещи --}}
                         <li>
                             <a class="dropdown-item @navactive('things.my')" href="{{ route('things.my') }}">
-                                <i class="fas fa-user"></i> Мои вещи
+                                 Мои вещи
                             </a>
                         </li>
                         
                         {{-- Мои вещи, используемые другими --}}
                         <li>
                             <a class="dropdown-item @navactive('things.used')" href="{{ route('things.used') }}">
-                                <i class="fas fa-users"></i> Мои вещи, используемые другими
+                                 Мои вещи, используемые другими
                             </a>
                         </li>
                         
@@ -200,21 +200,21 @@
                         {{-- Вещи в ремонте/мойке --}}
                         <li>
                             <a class="dropdown-item @navactive('things.repair')" href="{{ route('things.repair') }}">
-                                <i class="fas fa-tools"></i> Вещи в ремонте/мойке
+                                 Вещи в ремонте/мойке
                             </a>
                         </li>
                         
                         {{-- Вещи в работе --}}
                         <li>
                             <a class="dropdown-item @navactive('things.work')" href="{{ route('things.work') }}">
-                                <i class="fas fa-briefcase"></i> Вещи в работе
+                                 Вещи в работе
                             </a>
                         </li>
                         
                         {{-- Взятые мной вещи --}}
                         <li>
                             <a class="dropdown-item @navactive('things.borrowed')" href="{{ route('things.borrowed') }}">
-                                <i class="fas fa-handshake"></i> Взятые мной вещи
+                                 Взятые мной вещи
                             </a>
                         </li>
                         
@@ -223,7 +223,7 @@
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
-                                <i class="fas fa-eye"></i> Все вещи (админ)
+                                Все вещи (админ)
                             </a>
                         </li>
                         @endcan
@@ -233,7 +233,7 @@
                 {{-- Места --}}
                 <li class="nav-item">
                     <a class="nav-link @navactive('places.*')" href="{{ route('places.index') }}">
-                        <i class="fas fa-warehouse"></i> Места
+                         Места
                     </a>
                 </li>
                 
@@ -246,22 +246,22 @@
                     <a class="nav-link dropdown-toggle text-warning @navactive('things.admin.all') @navactive('places.create') @navactive('places.index')" 
                        href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" 
                        aria-expanded="false">
-                        <i class="fas fa-crown"></i> Админ
+                         Админ
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                         <li>
                             <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
-                                <i class="fas fa-eye"></i> Просмотр всех вещей
+                                 Просмотр всех вещей
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item @navactive('places.create')" href="{{ route('places.create') }}">
-                                <i class="fas fa-plus"></i> Добавить место
+                                 Добавить место
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item @navactive('places.index')" href="{{ route('places.index') }}">
-                                <i class="fas fa-edit"></i> Управление местами
+                                 Управление местами
                             </a>
                         </li>
                     </ul>
@@ -274,7 +274,7 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
+                         {{ Auth::user()->name }}
                         @if(Auth::user()->isAdmin())
                             <span class="badge bg-warning">Admin</span>
                         @endif
@@ -284,7 +284,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="dropdown-item">
-                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                     Выйти
                                 </button>
                             </form>
                         </li>
@@ -298,12 +298,12 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link @navactive('login')" href="{{ route('login') }}">
-                        <i class="fas fa-sign-in-alt"></i> Войти
+                         Войти
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @navactive('register')" href="{{ route('register') }}">
-                        <i class="fas fa-user-plus"></i> Регистрация
+                         Регистрация
                     </a>
                 </li>
             </ul>
@@ -379,11 +379,11 @@
     
     // Проверка подписки
     channel.bind('pusher:subscription_succeeded', function() {
-        console.log('✅ Subscribed to channel: things');
+        console.log('Subscribed to channel: things');
     });
     
     channel.bind('pusher:subscription_error', function(err) {
-        console.error('❌ Subscription error:', err);
+        console.error('Subscription error:', err);
     });
 
     // Обработка события создания вещи
@@ -472,11 +472,11 @@
     
     // Проверка подписки на канал places
     placesChannel.bind('pusher:subscription_succeeded', function() {
-        console.log('✅ Subscribed to channel: places');
+        console.log('Subscribed to channel: places');
     });
     
     placesChannel.bind('pusher:subscription_error', function(err) {
-        console.error('❌ Places subscription error:', err);
+        console.error('Places subscription error:', err);
     });
     
     // Обработка события создания места
@@ -526,7 +526,6 @@
         }
         
         // Заголовок в зависимости от того, кто создал
-        let title = isCreator ? '✅ Вы создали место!' : '🏢 Новое место хранения!';
         let message = isCreator 
             ? 'Вы успешно создали место хранения:' 
             : `<strong>${data.user_name}</strong> создал(а) место:`;

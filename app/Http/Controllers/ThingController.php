@@ -24,17 +24,32 @@ use App\Events\ThingCreated;
 class ThingController extends Controller
 {
     public function index()
-    {
-        $things = Cache::remember('things_all', 300, function () {
-            return Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
-                $query->where('is_current', true);
-            }])
-            ->latest()
-            ->paginate(10);
-        });
-        
-        return view('things.index', compact('things'));
-    }
+{
+    // ПУБЛИЧНЫЙ доступ - показываем только доступные вещи
+    $things = Cache::remember('things_public', 300, function () {
+        return Thing::with(['owner', 'usages' => function($query) {
+            $query->latest()->take(1)->with(['user', 'place', 'unit']);
+        }, 'descriptions' => function($query) {
+            $query->where('is_current', true);
+        }])
+        ->whereDoesntHave('usages.place', function($q) {
+            $q->where('repair', true)->orWhere('work', true);
+        })
+        ->latest()
+        ->paginate(10);
+    });
+    
+    return view('things.index', compact('things'));
+}
+
+public function show(Thing $thing)
+{
+    // ПУБЛИЧНЫЙ доступ
+    $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator']);
+    $currentUsage = $thing->usages()->latest()->first();
+    
+    return view('things.show', compact('thing', 'currentUsage'));
+}
 
     public function create()
     {
@@ -79,13 +94,6 @@ class ThingController extends Controller
             ->with('success', 'Вещь успешно создана!');
     }
 
-    public function show(Thing $thing)
-    {
-        $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator']);
-        $currentUsage = $thing->usages()->latest()->first();
-        
-        return view('things.show', compact('thing', 'currentUsage'));
-    }
 
     public function edit(Thing $thing)
     {
