@@ -44,13 +44,38 @@
                             </div>
                         @endif
                     </div>
-                    <div class="card-footer bg-transparent">
-                        <a href="{{ route('things.show', $thing) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-eye"></i> Подробнее
-                        </a>
+                    <div class="card-footer bg-transparent d-flex justify-content-between">
+                        <div>
+                            <a href="{{ route('things.show', $thing) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            
+                            @auth
+                                @if(Auth::id() == $thing->master)
+                                    <a href="{{ route('things.edit', $thing) }}" class="btn btn-outline-success btn-sm ms-1">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                @endif
+                            @endauth
+                        </div>
+                        
+                        <!-- КНОПКА УДАЛЕНИЯ -->
+                        @auth
+                            @if(Auth::id() == $thing->master)
+                                <form action="{{ route('things.destroy', $thing) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                            onclick="return confirm('Вы уверены, что хотите удалить эту вещь?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        @endauth
+                        
                         @guest
                             <button class="btn btn-outline-secondary btn-sm" disabled title="Требуется вход">
-                                <i class="fas fa-handshake"></i> Взять
+                                <i class="fas fa-handshake"></i>
                             </button>
                         @endguest
                     </div>
@@ -68,5 +93,6 @@
     <div class="d-flex justify-content-center">
         {{ $things->links() }}
     </div>
+    
 </div>
 @endsection

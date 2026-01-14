@@ -24,32 +24,32 @@ use App\Events\ThingCreated;
 class ThingController extends Controller
 {
     public function index()
-{
-    // ПУБЛИЧНЫЙ доступ - показываем только доступные вещи
-    $things = Cache::remember('things_public', 300, function () {
-        return Thing::with(['owner', 'usages' => function($query) {
-            $query->latest()->take(1)->with(['user', 'place', 'unit']);
-        }, 'descriptions' => function($query) {
-            $query->where('is_current', true);
-        }])
-        ->whereDoesntHave('usages.place', function($q) {
-            $q->where('repair', true)->orWhere('work', true);
-        })
-        ->latest()
-        ->paginate(10);
-    });
-    
-    return view('things.index', compact('things'));
-}
+    {
+        // ПУБЛИЧНЫЙ доступ - показываем только доступные вещи
+        $things = Cache::remember('things_public', 300, function () {
+            return Thing::with(['owner', 'usages' => function($query) {
+                $query->latest()->take(1)->with(['user', 'place', 'unit']);
+            }, 'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }])
+            ->whereDoesntHave('usages.place', function($q) {
+                $q->where('repair', true)->orWhere('work', true);
+            })
+            ->latest()
+            ->paginate(10);
+        });
+        
+        return view('things.index', compact('things'));
+    }
 
-public function show(Thing $thing)
-{
-    // ПУБЛИЧНЫЙ доступ
-    $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator']);
-    $currentUsage = $thing->usages()->latest()->first();
-    
-    return view('things.show', compact('thing', 'currentUsage'));
-}
+    public function show(Thing $thing)
+    {
+        // ПУБЛИЧНЫЙ доступ
+        $thing->load(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator']);
+        $currentUsage = $thing->usages()->latest()->first();
+        
+        return view('things.show', compact('thing', 'currentUsage'));
+    }
 
     public function create()
     {
@@ -80,20 +80,20 @@ public function show(Thing $thing)
                 'thing_id' => $thing->id,
                 'user_id' => Auth::id(),
                 'place_id' => $request->place_id,
-                'amount' => 1, // или нужное количество
-                'unit_id' => 1, // или другой unit
+                'amount' => 1,
+                'unit_id' => 1,
             ]);
         }
         
         // ОТПРАВКА СОБЫТИЯ В PUSHER
         broadcast(new ThingCreated($thing, Auth::user()));
 
-        Cache::forget('things_all');
+        // ОЧИСТКА ВСЕХ КЭШЕЙ
+        $this->clearAllThingCaches();
         
         return redirect()->route('things.index')
             ->with('success', 'Вещь успешно создана!');
     }
-
 
     public function edit(Thing $thing)
     {
@@ -121,7 +121,8 @@ public function show(Thing $thing)
             $this->sendDescriptionNotifications($thing, $request->description, false);
         }
 
-        Cache::forget('things_all');
+        // ОЧИСТКА ВСЕХ КЭШЕЙ
+        $this->clearAllThingCaches();
 
         return redirect()->route('things.index')
             ->with('success', 'Вещь успешно обновлена!');
@@ -131,7 +132,9 @@ public function show(Thing $thing)
     {
         $this->authorize('delete', $thing);
         $thing->delete();
-        Cache::forget('things_all');
+        
+        // ОЧИСТКА ВСЕХ КЭШЕЙ
+        $this->clearAllThingCaches();
 
         return redirect()->route('things.index')
             ->with('success', 'Вещь успешно удалена!');
@@ -218,35 +221,34 @@ public function show(Thing $thing)
     }
 
     public function all()
-{
-    $this->authorize('viewAll', Thing::class);
-    
-    // Убрал кэширование для пагинации, так как оно может вызывать проблемы
-    $things = Thing::with([
-        'owner',
-        'usages' => function($query) {
-            $query->latest()->limit(1);
-        },
-        'usages.user',
-        'usages.place',
-        'usages.unit',
-        'descriptions' => function($query) {
-            $query->where('is_current', true);
-        }
-    ])
-    ->latest()
-    ->paginate(20);
-    
-    // Добавляем удобные отношения для представления
-    $things->each(function($thing) {
-        $thing->latest_usage = $thing->usages->first();
-        $thing->latest_user = $thing->latest_usage?->user;
-        $thing->latest_place = $thing->latest_usage?->place;
-        $thing->latest_unit = $thing->latest_usage?->unit;
-    });
-    
-    return view('things.admin-all', compact('things'));
-}
+    {
+        $this->authorize('viewAll', Thing::class);
+        
+        $things = Thing::with([
+            'owner',
+            'usages' => function($query) {
+                $query->latest()->limit(1);
+            },
+            'usages.user',
+            'usages.place',
+            'usages.unit',
+            'descriptions' => function($query) {
+                $query->where('is_current', true);
+            }
+        ])
+        ->latest()
+        ->paginate(20);
+        
+        // Добавляем удобные отношения для представления
+        $things->each(function($thing) {
+            $thing->latest_usage = $thing->usages->first();
+            $thing->latest_user = $thing->latest_usage?->user;
+            $thing->latest_place = $thing->latest_usage?->place;
+            $thing->latest_unit = $thing->latest_usage?->unit;
+        });
+        
+        return view('things.admin-all', compact('things'));
+    }
 
     public function addDescription(Request $request, Thing $thing)
     {
@@ -271,15 +273,10 @@ public function show(Thing $thing)
 
         // Отправляем email уведомления
         $this->sendDescriptionNotifications($thing, $request->description, true);
-        //discription
         $this->sendDescriptionNotificationsNew($thing, $request->description, true);
+        
         // Очищаем кэш
-        Cache::forget('things_all');
-        Cache::forget('things_my_' . Auth::id());
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_admin_all');
+        $this->clearAllThingCaches();
 
         return back()->with('success', 'Описание успешно добавлено!');
     }
@@ -320,12 +317,7 @@ public function show(Thing $thing)
         }
 
         // Очищаем кэш
-        Cache::forget('things_all');
-        Cache::forget('things_my_' . Auth::id());
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_admin_all');
+        $this->clearAllThingCaches();
 
         return back()->with('success', 'Описание успешно обновлено!');
     }
@@ -347,12 +339,8 @@ public function show(Thing $thing)
         // ОБНОВЛЯЕМ ОСНОВНОЕ ОПИСАНИЕ ВЕЩИ
         $thing->update(['description' => $description->description]);
 
-        Cache::forget('things_all');
-        Cache::forget('things_my_' . Auth::id());
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_admin_all');
+        // Очищаем кэш
+        $this->clearAllThingCaches();
 
         return back()->with('success', 'Текущее описание обновлено!');
     }
@@ -431,11 +419,8 @@ public function show(Thing $thing)
             Log::error('Trace: ' . $e->getTraceAsString());
         }
 
-        Cache::forget('things_all');
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
-        Cache::forget('things_my_' . Auth::id());
+        // Очищаем кэш
+        $this->clearAllThingCaches();
 
         $message = 'Вещь успешно передана в пользование!';
         if ($emailSent) {
@@ -466,10 +451,8 @@ public function show(Thing $thing)
             ->where('user_id', $usage->user_id)
             ->delete();
 
-        Cache::forget('things_all');
-        Cache::forget('things_used');
-        Cache::forget('things_repair');
-        Cache::forget('things_work');
+        // Очищаем кэш
+        $this->clearAllThingCaches();
 
         return redirect()->route('things.show', $thing)
             ->with('success', 'Вещь успешно возвращена!');
@@ -489,104 +472,112 @@ public function show(Thing $thing)
     }
 
     /**
+     * Метод для очистки всех кэшей вещей
+     */
+    private function clearAllThingCaches()
+    {
+        Cache::forget('things_public');   // Публичный список
+        Cache::forget('things_all');      // Общий список
+        Cache::forget('things_my_' . Auth::id()); // Мои вещи
+        Cache::forget('things_repair');   // Вещи в ремонте
+        Cache::forget('things_work');     // Вещи в работе
+        Cache::forget('things_used');     // Используемые вещи
+        Cache::forget('things_admin_all'); // Админский список
+    }
+
+    /**
      * Отправка email уведомлений при изменении описания вещи
-     *
-     * @param Thing $thing Вещь
-     * @param string $descriptionText Текст описания
-     * @param bool $isNew Это новое описание (true) или обновление (false)
-     * @return bool
      */
     private function sendDescriptionNotifications(Thing $thing, $descriptionText, $isNew)
-{
-    try {
-        // Получаем пользователей для уведомления
+    {
+        try {
+            $usersToNotify = collect();
+            $currentUser = Auth::user();
+
+            // 1. Хозяин вещи (master) - если это не сам пользователь
+            if ($thing->master != $currentUser->id) {
+                $owner = $thing->owner;
+                if ($owner && $owner->email) {
+                    $usersToNotify->push($owner);
+                }
+            }
+
+            // 2. Текущий пользователь, у которого вещь
+            $currentUsage = $thing->currentUsage();
+            if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
+                $assignedUser = $currentUsage->user;
+                if ($assignedUser && $assignedUser->email) {
+                    $usersToNotify->push($assignedUser);
+                }
+            }
+
+            // Если некому отправлять, выходим
+            if ($usersToNotify->isEmpty()) {
+                Log::info("Нет получателей для email уведомления об описании вещи {$thing->id}");
+                return true;
+            }
+
+            // Отправляем email каждому пользователю
+            foreach ($usersToNotify as $user) {
+                try {
+                    Mail::to($user->email)
+                        ->queue(new ThingDescriptionUpdated(
+                            $thing, 
+                            $currentUser, 
+                            $descriptionText, 
+                            $isNew
+                        ));
+                    
+                    Log::info("Email уведомление об описании поставлено в очередь для {$user->email} (вещь: {$thing->name})");
+                    
+                } catch (\Exception $e) {
+                    Log::error("Ошибка отправки email для {$user->email}: " . $e->getMessage());
+                }
+            }
+
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при отправке уведомлений об описании вещи ' . $thing->id . ': ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Отправка уведомлений через Notification
+     */
+    private function sendDescriptionNotificationsNew(Thing $thing, $descriptionText, $isNew)
+    {
         $usersToNotify = collect();
         $currentUser = Auth::user();
 
-        // 1. Хозяин вещи (master) - если это не сам пользователь
+        // Хозяин вещи
         if ($thing->master != $currentUser->id) {
             $owner = $thing->owner;
-            if ($owner && $owner->email) {
+            if ($owner) {
                 $usersToNotify->push($owner);
             }
         }
 
-        // 2. Текущий пользователь, у которого вещь - если есть и не сам пользователь
-        $currentUsage = $thing->currentUsage(); // Используем метод, а не свойство
+        // Текущий пользователь вещи
+        $currentUsage = $thing->currentUsage();
         if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
-            $assignedUser = $currentUsage->user; // Используем отношение через usage
-            if ($assignedUser && $assignedUser->email) {
+            $assignedUser = $currentUsage->user;
+            if ($assignedUser) {
                 $usersToNotify->push($assignedUser);
             }
         }
 
-        // Если некому отправлять, выходим
-        if ($usersToNotify->isEmpty()) {
-            Log::info("Нет получателей для email уведомления об описании вещи {$thing->id}");
-            return true;
-        }
-
-        // Отправляем email каждому пользователю
+        // Сохраняем в НОВУЮ таблицу
         foreach ($usersToNotify as $user) {
-            try {
-                // Используем queue для асинхронной отправки
-                Mail::to($user->email)
-                    ->queue(new ThingDescriptionUpdated(
-                        $thing, 
-                        $currentUser, 
-                        $descriptionText, 
-                        $isNew
-                    ));
-                
-                Log::info("Email уведомление об описании поставлено в очередь для {$user->email} (вещь: {$thing->name})");
-                
-            } catch (\Exception $e) {
-                Log::error("Ошибка отправки email для {$user->email}: " . $e->getMessage());
-            }
-        }
-
-        return true;
-        
-    } catch (\Exception $e) {
-        Log::error('Ошибка при отправке уведомлений об описании вещи ' . $thing->id . ': ' . $e->getMessage());
-        return false;
-    }
-}
-    /**
- * Отправка уведомлений через Notification (ЗАДАНИЕ 19)
- */
-private function sendDescriptionNotificationsNew(Thing $thing, $descriptionText, $isNew)
-{
-    $usersToNotify = collect();
-    $currentUser = Auth::user();
-
-    // Хозяин вещи
-    if ($thing->master != $currentUser->id) {
-        $owner = $thing->owner;
-        if ($owner) {
-            $usersToNotify->push($owner);
+            DescriptionNotification::create([
+                'user_id' => $user->id,
+                'thing_id' => $thing->id,
+                'from_user_id' => $currentUser->id,
+                'type' => 'description_updated',
+                'title' => $isNew ? 'Добавлено описание' : 'Обновлено описание',
+                'message' => ($isNew ? 'Добавлено новое описание для вещи: ' : 'Обновлено описание вещи: ') . $thing->name,
+            ]);
         }
     }
-
-    // Текущий пользователь вещи
-    $currentUsage = $thing->currentUsage();
-    if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
-        $assignedUser = $currentUsage->user;
-        if ($assignedUser) {
-            $usersToNotify->push($assignedUser);
-        }
-    }
-
-    // Сохраняем в НОВУЮ таблицу
-    foreach ($usersToNotify as $user) {
-        DescriptionNotification::create([
-            'user_id' => $user->id,
-            'thing_id' => $thing->id,
-            'from_user_id' => $currentUser->id,
-            'type' => 'description_updated',
-            'title' => $isNew ? 'Добавлено описание' : 'Обновлено описание',
-            'message' => ($isNew ? 'Добавлено новое описание для вещи: ' : 'Обновлено описание вещи: ') . $thing->name,
-        ]);
-    }
-}
 }
