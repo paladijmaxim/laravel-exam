@@ -526,18 +526,6 @@
         };
         showPlaceNotification(testData);
     }
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const testPlaceBtn = document.createElement('button');
-        testPlaceBtn.innerHTML = '<i class="fas fa-warehouse"></i> Тест места';
-        testPlaceBtn.className = 'btn btn-info btn-sm';
-        testPlaceBtn.style.position = 'fixed';
-        testPlaceBtn.style.bottom = '100px';
-        testPlaceBtn.style.right = '20px';
-        testPlaceBtn.style.zIndex = '9998';
-        testPlaceBtn.onclick = testPlaceNotification;
-        document.body.appendChild(testPlaceBtn);
-    });
     @endif
     
     window.showThingNotification = showThingNotification;

@@ -86,7 +86,7 @@
     </div>
 
     <div class="d-flex justify-content-center">
-        {{ $things->links() }}
-    </div>
+    {{ $things->onEachSide(1)->links('pagination::simple-bootstrap-5') }}
+</div>
 </div>
 @endsection

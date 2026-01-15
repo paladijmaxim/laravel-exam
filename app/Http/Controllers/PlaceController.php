@@ -17,11 +17,12 @@ class PlaceController extends Controller
      */
     public function index()
     {
-        // Кэширование мест на 5 минут
-        $places = Cache::remember('places_all', 300, function () {
+        // Кэширование мест на 5 минут с учетом параметров запроса
+        $places = Cache::remember('places_all_' . md5(request()->getQueryString()), 300, function () {
             return Place::withCount('usages')
                        ->latest()
-                       ->paginate(10);
+                       ->paginate(10)
+                       ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('places.index', compact('places'));
@@ -61,7 +62,8 @@ class PlaceController extends Controller
         // Отправляем событие
         broadcast(new PlaceCreated($place, Auth::user()));
 
-        Cache::forget('places_all');
+        // Очищаем все кэши мест
+        $this->clearAllPlaceCaches();
 
         return redirect()->route('places.index')
             ->with('success', 'Место хранения успешно создано!');
@@ -73,7 +75,15 @@ class PlaceController extends Controller
     public function show(Place $place)
     {
         $place->load(['usages.thing.owner', 'usages.user', 'usages.unit']);
-        return view('places.show', compact('place'));
+        
+        // Пагинация для использования вещей в этом месте
+        $usages = $place->usages()
+            ->with(['thing.owner', 'user', 'unit'])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО, если на странице есть пагинация
+        
+        return view('places.show', compact('place', 'usages'));
     }
 
     /**
@@ -106,7 +116,8 @@ class PlaceController extends Controller
             'work' => $request->has('work'),
         ]);
 
-        Cache::forget('places_all'); // Очищаем кэш
+        // Очищаем все кэши мест
+        $this->clearAllPlaceCaches();
 
         return redirect()->route('places.index')
             ->with('success', 'Место хранения успешно обновлено!');
@@ -127,7 +138,8 @@ class PlaceController extends Controller
 
         $place->delete();
 
-        Cache::forget('places_all'); // Очищаем кэш
+        // Очищаем все кэши мест
+        $this->clearAllPlaceCaches();
 
         return redirect()->route('places.index')
             ->with('success', 'Место хранения успешно удалено!');
@@ -145,5 +157,23 @@ class PlaceController extends Controller
         });
         
         return response()->json($places);
+    }
+
+    /**
+     * Метод для очистки всех кэшей мест
+     */
+    private function clearAllPlaceCaches()
+    {
+        Cache::forget('places_all'); // Основной кэш
+        
+        // Также удаляем кэши с параметрами запроса
+        $keys = Cache::get('*places_all_*');
+        if ($keys) {
+            foreach ($keys as $key) {
+                Cache::forget($key);
+            }
+        }
+        
+        Cache::forget('places_available'); // Доступные места
     }
 }

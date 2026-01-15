@@ -12,7 +12,7 @@
     </div>
 
     <div class="row">
-        @foreach($places as $place)
+        @forelse($places as $place)
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div class="card-body">
@@ -32,7 +32,7 @@
                         
                         <p class="card-text">
                             <small class="text-muted">
-                                Вещей в хранении: {{ $place->usages()->count() }}
+                                Вещей в хранении: {{ $place->usages_count ?? $place->usages()->count() }}
                             </small>
                         </p>
                     </div>
@@ -59,11 +59,28 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Пока нет мест хранения
+                </div>
+            </div>
+        @endforelse
     </div>
 
-    <div class="d-flex justify-content-center">
-        {{ $places->links() }}
-    </div>
+    @if($places->hasPages())
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+                    {{-- Показываем только номера страниц --}}
+                    @for ($page = 1; $page <= $places->lastPage(); $page++)
+                        <li class="page-item {{ $places->currentPage() == $page ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $places->url($page) }}">{{ $page }}</a>
+                        </li>
+                    @endfor
+                </ul>
+            </nav>
+        </div>
+    @endif
 </div>
 @endsection

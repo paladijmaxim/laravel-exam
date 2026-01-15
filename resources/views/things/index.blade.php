@@ -90,9 +90,19 @@
         @endforelse
     </div>
 
-    <div class="d-flex justify-content-center">
-        {{ $things->links() }}
-    </div>
-    
+    @if($things->hasPages())
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+                    {{-- Показываем только номера страниц --}}
+                    @for ($page = 1; $page <= $things->lastPage(); $page++)
+                        <li class="page-item {{ $things->currentPage() == $page ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $things->url($page) }}">{{ $page }}</a>
+                        </li>
+                    @endfor
+                </ul>
+            </nav>
+        </div>
+    @endif
 </div>
 @endsection

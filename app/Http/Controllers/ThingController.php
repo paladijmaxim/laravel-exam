@@ -26,7 +26,7 @@ class ThingController extends Controller
     public function index()
     {
         // ПУБЛИЧНЫЙ доступ - показываем только доступные вещи
-        $things = Cache::remember('things_public', 300, function () {
+        $things = Cache::remember('things_public_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['owner', 'usages' => function($query) {
                 $query->latest()->take(1)->with(['user', 'place', 'unit']);
             }, 'descriptions' => function($query) {
@@ -36,7 +36,8 @@ class ThingController extends Controller
                 $q->where('repair', true)->orWhere('work', true);
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('things.index', compact('things'));
@@ -142,13 +143,14 @@ class ThingController extends Controller
 
     public function my()
     {
-        $things = Cache::remember('things_my_' . Auth::id(), 300, function () {
+        $things = Cache::remember('things_my_' . Auth::id() . '_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
                 $query->where('is_current', true);
             }])
             ->where('master', Auth::id())
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('things.my', compact('things'));
@@ -161,14 +163,15 @@ class ThingController extends Controller
                 $query->where('is_current', true);
             }, 'place', 'unit'])
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         
         return view('things.borrowed', compact('usages'));
     }
 
     public function repair()
     {
-        $things = Cache::remember('things_repair', 300, function () {
+        $things = Cache::remember('things_repair_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
                 $query->where('is_current', true);
             }])
@@ -178,7 +181,8 @@ class ThingController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('things.repair', compact('things'));
@@ -186,7 +190,7 @@ class ThingController extends Controller
 
     public function work()
     {
-        $things = Cache::remember('things_work', 300, function () {
+        $things = Cache::remember('things_work_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
                 $query->where('is_current', true);
             }])
@@ -196,7 +200,8 @@ class ThingController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('things.work', compact('things'));
@@ -204,7 +209,7 @@ class ThingController extends Controller
 
     public function used()
     {
-        $things = Cache::remember('things_used', 300, function () {
+        $things = Cache::remember('things_used_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
                 $query->where('is_current', true);
             }])
@@ -214,7 +219,8 @@ class ThingController extends Controller
                 $query->where('user_id', '!=', Auth::id());
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString(); // ← ДОБАВЛЕНО
         });
         
         return view('things.used', compact('things'));
@@ -237,7 +243,8 @@ class ThingController extends Controller
             }
         ])
         ->latest()
-        ->paginate(20);
+        ->paginate(20)
+        ->withQueryString(); // ← ДОБАВЛЕНО
         
         // Добавляем удобные отношения для представления
         $things->each(function($thing) {
@@ -483,6 +490,14 @@ class ThingController extends Controller
         Cache::forget('things_work');     // Вещи в работе
         Cache::forget('things_used');     // Используемые вещи
         Cache::forget('things_admin_all'); // Админский список
+        
+        // Также удаляем кэши с параметрами запроса
+        $keys = Cache::get('*things_public_*');
+        if ($keys) {
+            foreach ($keys as $key) {
+                Cache::forget($key);
+            }
+        }
     }
 
     /**

@@ -38,9 +38,9 @@ class ThingController extends Controller
             });
         }
 
-        // Пагинация
+        // Пагинация с сохранением параметров запроса
         $perPage = $request->get('per_page', 10);
-        $things = $query->paginate($perPage);
+        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
 
         return response()->json([
             'data' => $things->items(),
@@ -49,6 +49,9 @@ class ThingController extends Controller
                 'last_page' => $things->lastPage(),
                 'per_page' => $things->perPage(),
                 'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
             ]
         ]);
     }
@@ -164,7 +167,8 @@ class ThingController extends Controller
         }])
         ->where('master', Auth::id())
         ->latest()
-        ->paginate($request->get('per_page', 10));
+        ->paginate($request->get('per_page', 10))
+        ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
 
         return response()->json([
             'data' => $things->items(),
@@ -173,6 +177,9 @@ class ThingController extends Controller
                 'last_page' => $things->lastPage(),
                 'per_page' => $things->perPage(),
                 'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
             ]
         ]);
     }
@@ -187,7 +194,8 @@ class ThingController extends Controller
                 $query->where('is_current', true);
             }, 'place', 'unit'])
             ->latest()
-            ->paginate($request->get('per_page', 10));
+            ->paginate($request->get('per_page', 10))
+            ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
 
         return response()->json([
             'data' => $usages->items(),
@@ -196,6 +204,9 @@ class ThingController extends Controller
                 'last_page' => $usages->lastPage(),
                 'per_page' => $usages->perPage(),
                 'total' => $usages->total(),
+                'next_page_url' => $usages->nextPageUrl(),
+                'prev_page_url' => $usages->previousPageUrl(),
+                'path' => $usages->path(),
             ]
         ]);
     }
@@ -330,7 +341,8 @@ class ThingController extends Controller
                 }
             ])
             ->latest()
-            ->paginate($request->get('per_page', 20));
+            ->paginate($request->get('per_page', 20))
+            ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
 
         return response()->json([
             'data' => $things->items(),
@@ -339,6 +351,105 @@ class ThingController extends Controller
                 'last_page' => $things->lastPage(),
                 'per_page' => $things->perPage(),
                 'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get things in repair
+     */
+    public function repair(Request $request)
+    {
+        $query = Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+            $query->where('is_current', true);
+        }])
+        ->whereHas('usages', function($query) {
+            $query->whereHas('place', function($q) {
+                $q->where('repair', true);
+            });
+        })
+        ->latest();
+
+        $perPage = $request->get('per_page', 10);
+        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+
+        return response()->json([
+            'data' => $things->items(),
+            'meta' => [
+                'current_page' => $things->currentPage(),
+                'last_page' => $things->lastPage(),
+                'per_page' => $things->perPage(),
+                'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get things in work
+     */
+    public function work(Request $request)
+    {
+        $query = Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+            $query->where('is_current', true);
+        }])
+        ->whereHas('usages', function($query) {
+            $query->whereHas('place', function($q) {
+                $q->where('work', true);
+            });
+        })
+        ->latest();
+
+        $perPage = $request->get('per_page', 10);
+        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+
+        return response()->json([
+            'data' => $things->items(),
+            'meta' => [
+                'current_page' => $things->currentPage(),
+                'last_page' => $things->lastPage(),
+                'per_page' => $things->perPage(),
+                'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get used things
+     */
+    public function used(Request $request)
+    {
+        $query = Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
+            $query->where('is_current', true);
+        }])
+        ->whereHas('usages')
+        ->where('master', Auth::id())
+        ->whereHas('usages', function($query) {
+            $query->where('user_id', '!=', Auth::id());
+        })
+        ->latest();
+
+        $perPage = $request->get('per_page', 10);
+        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+
+        return response()->json([
+            'data' => $things->items(),
+            'meta' => [
+                'current_page' => $things->currentPage(),
+                'last_page' => $things->lastPage(),
+                'per_page' => $things->perPage(),
+                'total' => $things->total(),
+                'next_page_url' => $things->nextPageUrl(),
+                'prev_page_url' => $things->previousPageUrl(),
+                'path' => $things->path(),
             ]
         ]);
     }
