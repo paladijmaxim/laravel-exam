@@ -11,13 +11,12 @@ class Place extends Model
 {
     use HasFactory;
 
-    // СТРОГО как в задании: id, name, description, repair, work
     protected $fillable = [
         'name',
         'description',
         'repair',
         'work',
-        'created_by' // Добавляем поле
+        'created_by' 
     ];
 
     protected $casts = [

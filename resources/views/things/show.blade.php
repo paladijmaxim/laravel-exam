@@ -155,44 +155,6 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-history"></i> История использования</h5>
-                </div>
-                
-                <div class="card-body">
-                    @if($thing->usages->count() > 0)
-                        <div class="list-group">
-                            @foreach($thing->usages as $usage)
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-calendar"></i> {{ $usage->created_at->format('d.m.Y H:i') }}
-                                            </small>
-                                            <p class="mb-1 mt-1">
-                                                <strong>{{ $usage->user->name }}</strong> 
-                                                взял(а) {{ $usage->amount }} шт.
-                                            </p>
-                                            <small class="text-muted">
-                                                <i class="fas fa-map-marker-alt"></i> Место: {{ $usage->place->name }}
-                                                @if($usage->unit)
-                                                    <br><i class="fas fa-balance-scale"></i> Единица: {{ $usage->unit->name }}
-                                                @endif
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted text-center py-3">
-                            <i class="fas fa-history fa-2x mb-2"></i><br>
-                            Нет истории использования
-                        </p>
-                    @endif
-                </div>
-            </div>
 
             <!-- Блок гарантии -->
             @if($thing->wrnt)
@@ -285,7 +247,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
-            <!-- ИСПРАВЛЕНО: Используем things.update-description -->
             <form id="editDescriptionForm" method="POST">
                 @csrf
                 @method('PUT')

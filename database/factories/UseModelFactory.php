@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UseModelFactory extends Factory
 {
-    public function definition(): array
+    public function definition(): array // создает запись о том, кто, где и что использует и автоматически создает все связанные модели
     {
         return [
             'thing_id' => \App\Models\Thing::factory(),

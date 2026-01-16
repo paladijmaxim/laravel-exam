@@ -11,8 +11,8 @@ class PlaceFactory extends Factory
         return [
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
-            'repair' => $this->faker->boolean(20), // 20% chance
-            'work' => $this->faker->boolean(30), // 30% chance
+            'repair' => $this->faker->boolean(20), 
+            'work' => $this->faker->boolean(30), 
         ];
     }
 }

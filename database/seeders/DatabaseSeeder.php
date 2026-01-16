@@ -12,13 +12,13 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Запускаем сидеры для ролей и единиц измерения
+        // запуск сидеров для ролей и единиц измерения
         $this->call([
             RoleSeeder::class,
             UnitSeeder::class,
         ]);
 
-        // Создаем администратора
+        // создание администратора
         $admin = User::factory()->create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
@@ -26,20 +26,20 @@ class DatabaseSeeder extends Seeder
             'role_id' => 1, // admin
         ]);
 
-        // Создаем обычных пользователей
+        // создание обычных пользователей
         $users = User::factory(5)->create([
             'role_id' => 2, // user
         ]);
 
-        // Создаем места хранения
+        // создание места хранения
         $places = Place::factory(10)->create();
 
-        // Создаем вещи
+        // создание вещи
         $things = Thing::factory(20)->create([
             'master' => $admin->id,
         ]);
 
-        // Создаем записи об использовании
+        // создание записи об использовании
         foreach ($things->take(8) as $thing) {
             UseModel::factory()->create([
                 'thing_id' => $thing->id,
@@ -49,20 +49,20 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // Некоторые вещи в ремонте
+        // первые 3 после первых восьми в ремонте
         foreach ($things->slice(8, 3) as $thing) {
             $repairPlace = Place::where('repair', true)->first();
             if ($repairPlace) {
                 UseModel::factory()->create([
                     'thing_id' => $thing->id,
-                    'place_id' => $repairPlace->id,
+                    'place_id' => $repairPlace->id, // ид места для ремонта
                     'user_id' => $users->random()->id,
                     'unit_id' => rand(1, 6),
                 ]);
             }
         }
 
-        // Некоторые вещи в работе
+        // некторые вещи в работе
         foreach ($things->slice(11, 3) as $thing) {
             $workPlace = Place::where('work', true)->first();
             if ($workPlace) {

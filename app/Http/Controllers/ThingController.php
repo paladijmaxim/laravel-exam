@@ -244,9 +244,9 @@ class ThingController extends Controller
         ])
         ->latest()
         ->paginate(20)
-        ->withQueryString(); // ← ДОБАВЛЕНО
+        ->withQueryString(); 
         
-        // Добавляем удобные отношения для представления
+        // удобные отношения для представления
         $things->each(function($thing) {
             $thing->latest_usage = $thing->usages->first();
             $thing->latest_user = $thing->latest_usage?->user;

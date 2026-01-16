@@ -15,7 +15,7 @@ class Thing extends Model
         'name',
         'description',
         'wrnt',
-        'master'
+        'master' // внешний ключ к User
     ];
 
     protected $casts = [
@@ -47,7 +47,7 @@ class Thing extends Model
     }
 
     // Текущий пользователь вещи
-    public function currentUser()
+    public function currentUser() // Если есть текущее использование возвращает пользователя из этой записи
     {
         $usage = $this->currentUsage();
         return $usage ? $usage->user : null;
@@ -73,27 +73,27 @@ class Thing extends Model
     }
 
     public function isInSpecialPlace(): string
-{
-    if (!$this->isInUse()) {
+    {
+        if (!$this->isInUse()) {
+            return '';
+        }
+        
+        $place = $this->currentPlace();
+        
+        if (!$place) {
+            return '';
+        }
+        
+        if ($place->repair) {
+            return 'repair';
+        }
+        
+        if ($place->work) {
+            return 'work';
+        }
+        
         return '';
     }
-    
-    $place = $this->currentPlace();
-    
-    if (!$place) {
-        return '';
-    }
-    
-    if ($place->repair) {
-        return 'repair';
-    }
-    
-    if ($place->work) {
-        return 'work';
-    }
-    
-    return '';
-}
 
     /**
      * Boot method для архивации при удалении

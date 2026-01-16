@@ -11,8 +11,8 @@ class ThingFactory extends Factory
         return [
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
-            'wrnt' => $this->faker->dateTimeBetween('now', '+2 years'),
-            'master' => \App\Models\User::factory(),
+            'wrnt' => $this->faker->dateTimeBetween('now', '+2 years'), // гарантия от тек даты до +2 лет
+            'master' => \App\Models\User::factory(), // автоматически создали пользователя
         ];
     }
 }

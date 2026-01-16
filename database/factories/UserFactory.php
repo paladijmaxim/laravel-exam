@@ -14,7 +14,7 @@ class UserFactory extends Factory
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
-            'role_id' => 2, // По умолчанию обычный пользователь
+            'role_id' => 2, // по умолчанию обычный пользователь
         ];
     }
 }
