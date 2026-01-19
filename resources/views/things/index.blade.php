@@ -40,30 +40,6 @@
                             {{ Str::limit($thing->description, 100) }}
                         </p>
                         
-                        <!-- ДОБАВИТЬ БЛОК С КОЛИЧЕСТВОМ И ЕДИНИЦЕЙ -->
-                        <div class="mb-3">
-                            @if($thing->usages->isNotEmpty())
-                                @php
-                                    $usage = $thing->usages->first();
-                                @endphp
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="badge bg-primary fs-6 me-2">
-                                        {{ $usage->amount ?? 1 }}
-                                    </span>
-                                    <span class="text-muted">
-                                        {{ $usage->unit->abbreviation ?? 'шт' }}
-                                    </span>
-                                    <small class="text-muted ms-2">
-                                        ({{ $usage->unit->name ?? 'Штуки' }})
-                                    </small>
-                                </div>
-                            @else
-                                <div class="text-muted">
-                                    <i class="fas fa-box"></i> 1 шт (Штуки)
-                                </div>
-                            @endif
-                        </div>
-                        
                         <div class="mb-3">
                             <small class="text-muted">
                                 Владелец: 
@@ -78,18 +54,7 @@
                         @if($thing->usages->first() && $thing->usages->first()->user)
                             <div class="alert alert-warning py-1 mb-2">
                                 <small>
-                                    <i class="fas fa-user"></i>
                                     Используется: {{ $thing->usages->first()->user->name }}
-                                </small>
-                            </div>
-                        @endif
-                        
-                        <!-- ДОБАВИТЬ ИНФОРМАЦИЮ О МЕСТЕ -->
-                        @if($thing->usages->first() && $thing->usages->first()->place)
-                            <div class="alert alert-info py-1 mb-2">
-                                <small>
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    Место: {{ $thing->usages->first()->place->name }}
                                 </small>
                             </div>
                         @endif
@@ -98,12 +63,12 @@
                     <div class="card-footer bg-transparent d-flex justify-content-between">
                         <div>
                             <a href="{{ route('things.show', $thing) }}" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-eye"></i> Просмотр
+                                Просмотр
                             </a>
                             
                             @mything($thing)
                                 <a href="{{ route('things.edit', $thing) }}" class="btn btn-outline-success btn-sm ms-1">
-                                    <i class="fas fa-edit"></i> Редактировать
+                                    Редактировать
                                 </a>
                             @endmything
                         </div>
@@ -114,14 +79,14 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm" 
                                         onclick="return confirm('Вы уверены, что хотите удалить эту вещь?')">
-                                    <i class="fas fa-trash"></i> Удалить
+                                    Удалить
                                 </button>
                             </form>
                         @endmything
                         
                         @guest
                             <button class="btn btn-outline-secondary btn-sm" disabled title="Требуется вход">
-                                <i class="fas fa-hand-paper"></i> Взять
+                                Взять
                             </button>
                         @endguest
                     </div>
@@ -130,7 +95,7 @@
         @empty
             <div class="col-12">
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Пока нет доступных вещей
+                    Пока нет доступных вещей
                 </div>
             </div>
         @endforelse

@@ -32,31 +32,11 @@
                     
                     @if($currentUsage)
                         <div class="alert alert-warning">
-                            <h5><i class="fas fa-shopping-cart"></i> Текущее использование</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Пользователь:</strong> {{ $currentUsage->user->name }}</p>
-                                    <p><strong>Место хранения:</strong> {{ $currentUsage->place->name }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <!-- ДОБАВИТЬ БЛОК С КОЛИЧЕСТВОМ И ЕДИНИЦЕЙ -->
-                                    <p><strong>Количество:</strong></p>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-primary fs-5 me-2">
-                                            {{ $currentUsage->amount }}
-                                        </span>
-                                        <div>
-                                            <div class="fw-bold">{{ $currentUsage->unit->abbreviation ?? 'шт' }}</div>
-                                            <small class="text-muted">
-                                                {{ $currentUsage->unit->name ?? 'Штуки' }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 mb-0">
-                                <strong>С:</strong> {{ $currentUsage->created_at->format('d.m.Y H:i') }}
-                            </p>
+                            <h5>Текущее использование</h5>
+                            <p><strong>Пользователь:</strong> {{ $currentUsage->user->name }}</p>
+                            <p><strong>Место хранения:</strong> {{ $currentUsage->place->name }}</p>
+                            <p><strong>Количество:</strong> {{ $currentUsage->amount }}</p>
+                            <p><strong>С:</strong> {{ $currentUsage->created_at->format('d.m.Y H:i') }}</p>
                             
                             @if($thing->master == Auth::id())
                                 <form action="{{ route('things.return', $thing) }}" method="POST" class="mt-3">
@@ -152,6 +132,7 @@
                                 <h6 class="card-title">
                                     <i class="fas fa-plus-circle"></i> Добавить новое описание
                                 </h6>
+                                <!-- ИСПРАВЛЕНО: Используем things.add-description вместо descriptions.store -->
                                 <form action="{{ route('things.add-description', $thing) }}" method="POST">
                                     @csrf
                                     <div class="mb-3">
@@ -174,7 +155,6 @@
         </div>
         
         <div class="col-md-4">
-
             <!-- Блок гарантии -->
             @if($thing->wrnt)
             <div class="card mt-4 border-info">
@@ -198,66 +178,6 @@
                     @endif
                 </div>
             </div>
-            @endif
-            
-            <!-- ДОБАВИТЬ БЛОК ИНФОРМАЦИИ О ЕДИНИЦЕ ИЗМЕРЕНИЯ -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-weight"></i> Единица измерения</h5>
-                </div>
-                <div class="card-body">
-                    @if($currentUsage && $currentUsage->unit)
-                        <div class="text-center">
-                            <div class="display-4 text-primary mb-2">
-                                {{ $currentUsage->unit->abbreviation }}
-                            </div>
-                            <h4>{{ $currentUsage->unit->name }}</h4>
-                            <small class="text-muted">
-                                Стандартная единица для этой вещи
-                            </small>
-                        </div>
-                    @else
-                        <p class="text-muted">
-                            <i class="fas fa-box"></i> 
-                            Стандартная единица: Штуки (шт)
-                        </p>
-                    @endif
-                </div>
-            </div>
-            
-            <!-- ДОБАВИТЬ БЛОК ИСТОРИИ ИСПОЛЬЗОВАНИЙ -->
-            @if($thing->usages->count() > 1)
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-history"></i> История количеств</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            @foreach($thing->usages->take(5) as $usage)
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>{{ $usage->amount }}</strong>
-                                            <small class="text-muted">
-                                                {{ $usage->unit->abbreviation ?? 'шт' }}
-                                            </small>
-                                        </div>
-                                        <div>
-                                            <small class="text-muted">
-                                                {{ $usage->created_at->format('d.m.Y') }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                    @if($usage->user)
-                                        <small class="text-muted">
-                                            <i class="fas fa-user"></i> {{ $usage->user->name }}
-                                        </small>
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
             @endif
         </div>
     </div>
@@ -299,29 +219,10 @@
                         </select>
                     </div>
                     
-                    <!-- ДОБАВИТЬ ВЫБОР ЕДИНИЦЫ ИЗМЕРЕНИЯ -->
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="mb-3">
-                                <label for="amount" class="form-label">Количество</label>
-                                <input type="number" name="amount" id="amount" 
-                                       class="form-control" value="1" min="1" required>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="mb-3">
-                                <label for="unit_id" class="form-label">Единица</label>
-                                <select name="unit_id" id="unit_id" class="form-select" required>
-                                    <option value="">Выберите единицу</option>
-                                    @foreach(\App\Models\Unit::orderBy('name')->get() as $unit)
-                                        <option value="{{ $unit->id }}"
-                                            {{ $currentUsage && $currentUsage->unit_id == $unit->id ? 'selected' : '' }}>
-                                            {{ $unit->abbreviation }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Количество</label>
+                        <input type="number" name="amount" id="amount" 
+                               class="form-control" value="1" min="1" required>
                     </div>
                 </div>
                 
@@ -345,6 +246,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
+            <!-- ИСПРАВЛЕНО: Используем things.update-description -->
             <form id="editDescriptionForm" method="POST">
                 @csrf
                 @method('PUT')

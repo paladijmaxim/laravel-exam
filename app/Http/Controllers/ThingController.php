@@ -27,7 +27,7 @@ class ThingController extends Controller
     {
         $things = Cache::remember('things_public_' . md5(request()->getQueryString()), 300, function () {
             return Thing::with(['owner', 'usages' => function($query) {
-                $query->latest()->take(1)->with(['user', 'place', 'unit']); // unit уже есть!
+                $query->latest()->take(1)->with(['user', 'place', 'unit']);
             }, 'descriptions' => function($query) {
                 $query->where('is_current', true);
             }])
@@ -337,7 +337,7 @@ class ThingController extends Controller
             'title' => 'Вам назначена вещь',
             'message' => "Пользователь " . Auth::user()->name . 
                          " назначил вам вещь '{$thing->name}' для использования в месте: {$place->name}. " .
-                         "Количество: {$request->amount} " . ($unit ? $unit->abbreviation : 'шт') . "."
+                         "Количество: {$request->amount} шт."
         ]);
 
         $emailSent = false; // флаг успешности отправки
@@ -447,7 +447,7 @@ class ThingController extends Controller
             }
 
             // текущий пользователь, у которого вещь
-            $currentUsage = $thing->usages()->latest()->first();
+            $currentUsage = $thing->currentUsage();
             if ($currentUsage && $currentUsage->user_id != $currentUser->id) {
                 $assignedUser = $currentUsage->user;
                 if ($assignedUser) {

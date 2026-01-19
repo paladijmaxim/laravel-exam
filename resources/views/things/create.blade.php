@@ -42,26 +42,7 @@
                             @enderror
                         </div>
                         
-                        <!-- ПОЛЕ ДЛЯ ЕДИНИЦЫ ИЗМЕРЕНИЯ (ТОЛЬКО ЭТО ДОБАВИЛ) -->
-                        <div class="mb-3">
-                            <label for="unit_id" class="form-label">Единица измерения</label>
-                            <select class="form-control @error('unit_id') is-invalid @enderror" 
-                                    id="unit_id" name="unit_id">
-                                <option value="">-- Выберите единицу --</option>
-                                @foreach(\App\Models\Unit::orderBy('name')->get() as $unit)
-                                    <option value="{{ $unit->id }}" 
-                                        {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
-                                        {{ $unit->name }} ({{ $unit->abbreviation }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="form-text">В каких единицах измеряется вещь (например: кг, шт, л)</div>
-                            @error('unit_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        
-                        <!-- ОСТАВИЛ ВСЁ КАК БЫЛО -->
+                        {{-- ВОТ ЭТО ПОЛЕ ДОБАВЬ --}}
                         <div class="mb-3">
                             <label for="place_id" class="form-label">Место хранения</label>
                             <select class="form-control @error('place_id') is-invalid @enderror" 
@@ -85,7 +66,6 @@
                             @enderror
                         </div>
                         
-                        <!-- КОЛИЧЕСТВО ОСТАЛОСЬ НЕИЗМЕННЫМ -->
                         <div class="mb-3">
                             <label for="amount" class="form-label">Количество</label>
                             <input type="number" class="form-control @error('amount') is-invalid @enderror" 
