@@ -10,40 +10,34 @@ class BladeDirectiveServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Директива с параметрами (без закрывающего тега)
         Blade::directive('mything', function ($expression) {
-            // Обрабатываем выражение: @mything($thing, 'style')
+            // выражение: @mything($thing, 'style')
             $expression = trim($expression, "()");
             
             if (empty($expression)) {
                 return '';
             }
             
-            // Разделяем на части
-            $parts = array_map('trim', explode(',', $expression, 2));
+            $parts = array_map('trim', explode(',', $expression, 2)); // разделение на части, array_map('trim' убирает проблемы в разных частях
             $thing = $parts[0];
             $type = isset($parts[1]) ? trim($parts[1], " '\"") : 'check';
             
-            // Если тип 'check' - это обычное условие
-            if ($type === 'check') {
+            if ($type === 'check') { // если тип 'check'
                 return "<?php if (Auth::check() && {$thing}->master == Auth::id()): ?>";
             }
             
-            // Для других типов возвращаем значение
-            return "<?php echo (Auth::check() && {$thing}->master == Auth::id()) ? '" . 
+            return "<?php echo (Auth::check() && {$thing}->master == Auth::id()) ? '" .  // для других типов возвращаем значение
                    $this->getOutput($type) . "' : ''; ?>";
         });
         
-        // Закрывающая директива
-        Blade::directive('endmything', function () {
+        Blade::directive('endmything', function () { // закрывающая директива
             return '<?php endif; ?>';
         });
 
         Blade::directive('navactive', function ($expression) {
-            // Убираем скобки и кавычки
             $expression = trim($expression, "() '\"");
             
-            // Если есть запятая - значит есть второй параметр (класс)
+            // если есть запятая - значит есть второй параметр
             if (str_contains($expression, ',')) {
                 [$route, $class] = explode(',', $expression, 2);
                 $route = trim($route, " '\"");
@@ -53,13 +47,11 @@ class BladeDirectiveServiceProvider extends ServiceProvider
                 $class = 'active';
             }
             
-            // Проверяем, является ли это паттерном (содержит *)
-            if (str_contains($route, '*')) {
+            if (str_contains($route, '*')) { // проверка является ли это паттерном (содержит *)
                 return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>";
             }
-            
-            // Для конкретного маршрута
-            return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>";
+              
+            return "<?php if (request()->routeIs('{$route}')) echo '{$class}'; ?>"; // Для конкретного маршрута
         });
 
         Blade::directive('specialthing', function ($thing) {
@@ -76,7 +68,7 @@ class BladeDirectiveServiceProvider extends ServiceProvider
         return match($type) {
             'style' => 'style="background-color: #e8f5e9; border-left: 4px solid #28a745;"',
             'class' => 'my-thing-highlight',
-            'badge' => '<span class="badge bg-success"><i class="fas fa-user"></i> Моя</span>',
+            'badge' => '<span class="badge bg-success">Моя</span>',
             'icon' => 'text-success',
             'owner' => '<span class="text-success fw-bold"><i class="fas fa-user-check"></i> Вы</span>',
             default => ''

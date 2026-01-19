@@ -14,15 +14,6 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        $stats = [
-            'my_things' => Thing::where('master', $user->id)->count(),
-            'borrowed_things' => UseModel::where('user_id', $user->id)->count(),
-            'total_places' => Place::count(),
-            'available_places' => Place::where('repair', false)
-                ->where('work', false)
-                ->count(),
-        ];
-        
         // Мои вещи
         $myThings = Thing::where('master', $user->id)
             ->with(['usages.user', 'usages.place'])
@@ -37,6 +28,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
         
-        return view('dashboard', compact('stats', 'myThings', 'borrowedThings'));
+        return view('dashboard', compact('myThings', 'borrowedThings')); // compact()  создает массив ['myThings' => $myThings, и тд]
     }
 }

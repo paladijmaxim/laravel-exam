@@ -12,7 +12,7 @@ use App\Models\Thing;
 use App\Models\User;
 use App\Models\Place;
 
-class ThingAssignedMail extends Mailable implements ShouldQueue
+class ThingAssignedMail extends Mailable 
 {
     use Queueable, SerializesModels;
 
@@ -23,9 +23,6 @@ class ThingAssignedMail extends Mailable implements ShouldQueue
     public $place;
     public $unit;
 
-    /**
-     * Create a new message instance.
-     */
     public function __construct(Thing $thing, User $owner, User $recipient, $amount, Place $place, $unit = null)
     {
         $this->thing = $thing;
@@ -36,9 +33,6 @@ class ThingAssignedMail extends Mailable implements ShouldQueue
         $this->unit = $unit;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -47,14 +41,10 @@ class ThingAssignedMail extends Mailable implements ShouldQueue
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
         return new Content(
             view: 'emails.thing-assigned',
-            text: 'emails.thing-assigned-text',
             with: [
                 'thing' => $this->thing,
                 'owner' => $this->owner,
@@ -67,11 +57,6 @@ class ThingAssignedMail extends Mailable implements ShouldQueue
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
     public function attachments(): array
     {
         return [];

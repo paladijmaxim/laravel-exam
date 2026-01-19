@@ -9,13 +9,13 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center {{ $archivedThing->restored ? 'bg-success text-white' : 'bg-warning' }}">
                     <h4 class="mb-0">
-                        <i class="fas fa-archive"></i> Архивная запись: {{ $archivedThing->name }}
+                        Архивная запись: {{ $archivedThing->name }}
                         @if($archivedThing->restored)
                             <span class="badge bg-light text-dark ms-2">Восстановлена</span>
                         @endif
                     </h4>
                     <a href="{{ route('archived.index') }}" class="btn btn-sm {{ $archivedThing->restored ? 'btn-light' : 'btn-secondary' }}">
-                        <i class="fas fa-arrow-left"></i> Назад
+                        Назад
                     </a>
                 </div>
                 
@@ -80,7 +80,7 @@
                 <div class="card-footer">
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('archived.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> К списку архива
+                            К списку архива
                         </a>
                         
                         <div>
@@ -90,7 +90,7 @@
                                     @csrf
                                     <button type="submit" class="btn btn-success"
                                             onclick="return confirm('Восстановить эту вещь? Вы станете ее новым владельцем.')">
-                                        <i class="fas fa-undo"></i> Восстановить вещь
+                                        Восстановить вещь
                                     </button>
                                 </form>
                             @endif
@@ -102,7 +102,7 @@
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger"
                                             onclick="return confirm('Удалить эту запись из архива навсегда?')">
-                                        <i class="fas fa-times"></i> Удалить навсегда
+                                        Удалить навсегда
                                     </button>
                                 </form>
                             @endcan
@@ -115,42 +115,26 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Статус</h5>
+                    <h5 class="mb-0">Статус</h5>
                 </div>
                 <div class="card-body">
                     @if($archivedThing->restored)
                         <div class="alert alert-success">
-                            <h6><i class="fas fa-check-circle"></i> Вещь восстановлена</h6>
+                            <h6>Вещь восстановлена</h6>
                             <p class="mb-0">
                                 Эта вещь была восстановлена {{ $archivedThing->formatted_restored_at }}<br>
                                 Новым владельцем стал: <strong>{{ $archivedThing->restored_by_name }}</strong>
                             </p>
                         </div>
-                        <p>
-                            <i class="fas fa-lightbulb"></i> Восстановленная вещь доступна в общем списке вещей.
-                        </p>
                     @else
                         <div class="alert alert-warning">
-                            <h6><i class="fas fa-trash"></i> Вещь в архиве</h6>
+                            <h6>Вещь в архиве</h6>
                             <p class="mb-0">
                                 Удалена: {{ $archivedThing->formatted_deleted_at }}<br>
                                 Можно восстановить
                             </p>
                         </div>
-                        <p>
-                            <i class="fas fa-lightbulb"></i> При восстановлении вы станете новым владельцем этой вещи.
-                        </p>
                     @endif
-                    
-                    <hr>
-                    
-                    <h6>Что происходит при восстановлении:</h6>
-                    <ul class="small">
-                        <li>Создается новая вещь с теми же данными</li>
-                        <li>Вы становитесь владельцем восстановленной вещи</li>
-                        <li>Запись в архиве помечается как восстановленная</li>
-                        <li>Оригинальная информация об архиве сохраняется</li>
-                    </ul>
                 </div>
             </div>
         </div>

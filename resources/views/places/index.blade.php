@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Места хранения</h1>
         <a href="{{ route('places.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Добавить место
+            Добавить место
         </a>
     </div>
 
@@ -40,11 +40,11 @@
                     <div class="card-footer">
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('places.show', $place) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i>
+                                Просмотр
                             </a>
                             
                             <a href="{{ route('places.edit', $place) }}" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
+                                Редактировать
                             </a>
                             
                             <form action="{{ route('places.destroy', $place) }}" method="POST" class="d-inline">
@@ -52,7 +52,7 @@
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger" 
                                         onclick="return confirm('Удалить это место хранения?')">
-                                    <i class="fas fa-trash"></i>
+                                    Удалить
                                 </button>
                             </form>
                         </div>
@@ -62,7 +62,7 @@
         @empty
             <div class="col-12">
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Пока нет мест хранения
+                    Пока нет мест хранения
                 </div>
             </div>
         @endforelse
@@ -72,7 +72,6 @@
         <div class="d-flex justify-content-center">
             <nav aria-label="Page navigation">
                 <ul class="pagination mb-0">
-                    {{-- Показываем только номера страниц --}}
                     @for ($page = 1; $page <= $places->lastPage(); $page++)
                         <li class="page-item {{ $places->currentPage() == $page ? 'active' : '' }}">
                             <a class="page-link" href="{{ $places->url($page) }}">{{ $page }}</a>

@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1> Архив удаленных вещей</h1>
         <a href="{{ route('things.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Назад к вещам
+            Назад к вещам
         </a>
     </div>
 
@@ -53,7 +53,7 @@
                             <td>
                                 @if($archived->restored)
                                     <span class="badge bg-success">
-                                        <i class="fas fa-check"></i> Восстановлена
+                                         Восстановлена
                                     </span>
                                     <br>
                                     <small class="text-muted">
@@ -62,7 +62,7 @@
                                     </small>
                                 @else
                                     <span class="badge bg-warning">
-                                        <i class="fas fa-trash"></i> В архиве
+                                         В архиве
                                     </span>
                                 @endif
                             </td>
@@ -70,7 +70,7 @@
                                 <div class="btn-group btn-group-sm">
                                     <a href="{{ route('archived.show', $archived) }}" 
                                        class="btn btn-info" title="Подробнее">
-                                        <i class="fas fa-eye"></i>
+                                        Подробнее
                                     </a>
                                     
                                     @if(!$archived->restored)
@@ -80,7 +80,7 @@
                                             <button type="submit" class="btn btn-success" 
                                                     title="Восстановить"
                                                     onclick="return confirm('Восстановить эту вещь? Вы станете ее новым владельцем.')">
-                                                <i class="fas fa-undo"></i>
+                                                Восстановить
                                             </button>
                                         </form>
                                     @endif
@@ -93,7 +93,7 @@
                                         <button type="submit" class="btn btn-danger" 
                                                 title="Удалить навсегда"
                                                 onclick="return confirm('Удалить эту запись из архива навсегда? Это действие нельзя отменить.')">
-                                            <i class="fas fa-times"></i>
+                                            
                                         </button>
                                     </form>
                                     @endcan

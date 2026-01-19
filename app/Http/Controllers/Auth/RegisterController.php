@@ -29,18 +29,17 @@ class RegisterController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // 1. Аутентифицируем через сессии
+        // аутентифицируем через сессии
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
-        // 2. Создаем токен Sanctum
-        $token = $user->createToken('web-token')->plainTextToken;
+        // создаем токен Sanctum
+        $token = $user->createToken('web-token')->plainTextToken; // возвращает plain text токен (не хэшированный)
         
-        // 3. Сохраняем токен в сессии
-        session(['sanctum_token' => $token]);
+        // сохраняем токен в сессии
+        session(['sanctum_token' => $token]); // хранить токен безопасно на сервере
 
         return redirect()->route('dashboard')
-            ->with('success', 'Регистрация успешна!')
-            ->withCookie(cookie('sanctum_token', $token)); // Сессионная кука
+            ->with('success', 'Регистрация успешна!'); 
     }
 }

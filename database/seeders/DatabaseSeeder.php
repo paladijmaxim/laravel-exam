@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UnitSeeder::class,
+            UnitsTableSeeder::class,
         ]);
 
         // создание администратора

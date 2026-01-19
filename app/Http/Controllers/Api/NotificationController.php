@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function index() // получшение списка уведомлений
     {
         $notifications = Auth::user()->notifications()->latest()->paginate(20);
         
         return response()->json([
-            'data' => $notifications->items(),
-            'meta' => [
-                'current_page' => $notifications->currentPage(),
+            'data' => $notifications->items(), // Текущая страница с уведомлениями
+            'meta' => [ // для пагинации
+                'current_page' => $notifications->currentPage(), 
                 'last_page' => $notifications->lastPage(),
                 'per_page' => $notifications->perPage(),
                 'total' => $notifications->total(),
@@ -24,7 +24,7 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function markAsRead(Request $request, $id)
+    public function markAsRead(Request $request, $id) // отметка уведомления как прочитанного
     {
         $notification = Notification::where('user_id', Auth::id())
             ->where('id', $id)

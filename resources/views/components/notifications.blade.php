@@ -23,7 +23,6 @@
     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
         <li><h6 class="dropdown-header">Уведомления</h6></li>
         
-        <!-- Уведомления о назначении вещей -->
         @foreach($notifications as $notification)
             <li>
                 <a class="dropdown-item {{ !$notification->read ? 'fw-bold' : '' }}" 
@@ -36,7 +35,6 @@
             </li>
         @endforeach
         
-        <!-- Уведомления об описаниях -->
         @foreach($descNotifications as $notification)
             <li>
                 <a class="dropdown-item {{ !$notification->read ? 'fw-bold' : '' }}" 

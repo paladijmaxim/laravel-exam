@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class ArchivedThingController extends Controller
 {
-    /**
-     * Display a listing of archived things
-     */
     public function index(Request $request)
     {
         $query = ArchivedThing::query();
@@ -47,9 +44,6 @@ class ArchivedThingController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified archived thing
-     */
     public function show($id)
     {
         $archivedThing = ArchivedThing::findOrFail($id);
@@ -59,9 +53,6 @@ class ArchivedThingController extends Controller
         ]);
     }
 
-    /**
-     * Restore thing from archive
-     */
     public function restore($id)
     {
         // Проверка прав доступа
@@ -91,9 +82,6 @@ class ArchivedThingController extends Controller
         ]);
     }
 
-    /**
-     * Permanently delete from archive (force delete)
-     */
     public function forceDelete($id)
     {
         // Проверка прав доступа
@@ -112,9 +100,6 @@ class ArchivedThingController extends Controller
         ]);
     }
 
-    /**
-     * Get statistics about archived things
-     */
     public function stats()
     {
         $total = ArchivedThing::count();

@@ -25,16 +25,19 @@ class Notification extends Model
         'read_at' => 'datetime'
     ];
 
+    // получатель уведомления
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    // вещь, к которой относится уведомление
     public function thing()
     {
         return $this->belongsTo(Thing::class);
     }
 
+    // отправитель уведомления
     public function fromUser()
     {
         return $this->belongsTo(User::class, 'from_user_id');
@@ -42,7 +45,7 @@ class Notification extends Model
 
     public function markAsRead()
     {
-        if (!$this->read) {
+        if (!$this->read) { // только если не прочитано 
             $this->update([
                 'read' => true,
                 'read_at' => now()

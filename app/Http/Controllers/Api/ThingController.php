@@ -15,9 +15,6 @@ use Illuminate\Support\Facades\DB;
 
 class ThingController extends Controller
 {
-    /**
-     * Display a listing of things (public)
-     */
     public function index(Request $request)
     {
         $query = Thing::with(['owner', 'usages' => function($query) {
@@ -30,7 +27,7 @@ class ThingController extends Controller
         })
         ->latest();
 
-        // Фильтрация по поиску
+        // фильтрация по поиску
         if ($request->has('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -38,9 +35,9 @@ class ThingController extends Controller
             });
         }
 
-        // Пагинация с сохранением параметров запроса
+        // пагинация с сохранением параметров запроса
         $perPage = $request->get('per_page', 10);
-        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+        $things = $query->paginate($perPage)->withQueryString(); 
 
         return response()->json([
             'data' => $things->items(),
@@ -56,9 +53,6 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created thing
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -93,13 +87,9 @@ class ThingController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified thing (public)
-     */
     public function show($id)
     {
-        $thing = Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator'])
-            ->findOrFail($id);
+        $thing = Thing::with(['owner', 'usages.user', 'usages.place', 'usages.unit', 'descriptions.creator'])->findOrFail($id);
 
         return response()->json([
             'data' => $thing,
@@ -107,14 +97,11 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified thing
-     */
     public function update(Request $request, $id)
     {
         $thing = Thing::findOrFail($id);
         
-        // Проверка прав доступа
+        // проверка прав доступа
         if ($thing->master != Auth::id()) {
             return response()->json(['message' => 'Недостаточно прав'], 403);
         }
@@ -137,14 +124,10 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified thing
-     */
     public function destroy($id)
     {
         $thing = Thing::findOrFail($id);
         
-        // Проверка прав доступа
         if ($thing->master != Auth::id()) {
             return response()->json(['message' => 'Недостаточно прав'], 403);
         }
@@ -157,9 +140,6 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get user's things
-     */
     public function myThings(Request $request)
     {
         $things = Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
@@ -168,7 +148,7 @@ class ThingController extends Controller
         ->where('master', Auth::id())
         ->latest()
         ->paginate($request->get('per_page', 10))
-        ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+        ->withQueryString();
 
         return response()->json([
             'data' => $things->items(),
@@ -184,10 +164,7 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get borrowed things
-     */
-    public function borrowedThings(Request $request)
+    public function borrowedThings(Request $request) // взятые вещи
     {
         $usages = UseModel::where('user_id', Auth::id())
             ->with(['thing.owner', 'thing.descriptions' => function($query) {
@@ -195,7 +172,7 @@ class ThingController extends Controller
             }, 'place', 'unit'])
             ->latest()
             ->paginate($request->get('per_page', 10))
-            ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+            ->withQueryString();
 
         return response()->json([
             'data' => $usages->items(),
@@ -211,15 +188,12 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Transfer thing to another user
-     */
     public function transfer(Request $request, $id)
     {
         $thing = Thing::findOrFail($id);
         
         if ($thing->master != Auth::id()) {
-            return response()->json(['message' => 'Только владелец может передавать вещь!'], 403);
+            return response()->json(['message' => 'Только владелец может передавать вещь'], 403);
         }
 
         $request->validate([
@@ -232,10 +206,9 @@ class ThingController extends Controller
         $recipient = User::findOrFail($request->user_id);
         $place = Place::findOrFail($request->place_id);
 
-        // Удаляем предыдущие использования
-        UseModel::where('thing_id', $thing->id)->delete();
+        UseModel::where('thing_id', $thing->id)->where('user_id', Auth::id())->delete();
 
-        // Создаем новое использование
+        // создать новое использование
         UseModel::create([
             'thing_id' => $thing->id,
             'place_id' => $request->place_id,
@@ -257,16 +230,13 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Return thing
-     */
-    public function returnThing($id)
+    public function returnThing($id) // возврат вещи
     {
         $thing = Thing::findOrFail($id);
         $usage = $thing->usages()->latest()->first();
         
         if (!$usage) {
-            return response()->json(['message' => 'Эта вещь не находится в пользовании!'], 400);
+            return response()->json(['message' => 'Эта вещь не в пользовании'], 400);
         }
 
         DB::table('uses')
@@ -283,32 +253,28 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Add description to thing
-     */
     public function addDescription(Request $request, $id)
     {
-        $thing = Thing::findOrFail($id);
+    
+        $this->authorize('update', $thing);
         
-        if ($thing->master != Auth::id()) {
-            return response()->json(['message' => 'Недостаточно прав'], 403);
-        }
+        $thing = Thing::findOrFail($id);
 
         $request->validate([
             'description' => 'required|string|min:3'
         ]);
 
-        // Сбрасываем текущий статус у всех описаний этой вещи
+        // сброс текущий статус у всех описаний этой вещи
         $thing->descriptions()->update(['is_current' => false]);
         
-        // Создаем новое описание как текущее
+        // новое описание как текущее
         $newDescription = $thing->descriptions()->create([
             'description' => $request->description,
             'is_current' => true,
             'created_by' => Auth::id()
         ]);
 
-        // Обновляем основное описание вещи
+        // обнов основное описание вещи
         $thing->update(['description' => $request->description]);
 
         Cache::forget('things_all');
@@ -320,17 +286,13 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get admin things (all things)
-     */
     public function adminAll(Request $request)
     {
-        // Проверка прав администратора (добавьте свою логику)
         if (!Auth::user()->is_admin) {
             return response()->json(['message' => 'Недостаточно прав'], 403);
         }
 
-        $things = Thing::withTrashed()
+        $things = Thing::withTrashed() // вкл удаленные
             ->with([
                 'owner',
                 'usages' => function($query) {
@@ -342,7 +304,7 @@ class ThingController extends Controller
             ])
             ->latest()
             ->paginate($request->get('per_page', 20))
-            ->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+            ->withQueryString();
 
         return response()->json([
             'data' => $things->items(),
@@ -358,9 +320,6 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get things in repair
-     */
     public function repair(Request $request)
     {
         $query = Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
@@ -374,7 +333,7 @@ class ThingController extends Controller
         ->latest();
 
         $perPage = $request->get('per_page', 10);
-        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+        $things = $query->paginate($perPage)->withQueryString();
 
         return response()->json([
             'data' => $things->items(),
@@ -390,9 +349,6 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get things in work
-     */
     public function work(Request $request)
     {
         $query = Thing::with(['owner', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
@@ -406,7 +362,7 @@ class ThingController extends Controller
         ->latest();
 
         $perPage = $request->get('per_page', 10);
-        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+        $things = $query->paginate($perPage)->withQueryString();
 
         return response()->json([
             'data' => $things->items(),
@@ -422,9 +378,6 @@ class ThingController extends Controller
         ]);
     }
 
-    /**
-     * Get used things
-     */
     public function used(Request $request)
     {
         $query = Thing::with(['usages.user', 'usages.place', 'usages.unit', 'descriptions' => function($query) {
@@ -438,7 +391,7 @@ class ThingController extends Controller
         ->latest();
 
         $perPage = $request->get('per_page', 10);
-        $things = $query->paginate($perPage)->withQueryString(); // ← ДОБАВЬТЕ ЭТО
+        $things = $query->paginate($perPage)->withQueryString(); 
 
         return response()->json([
             'data' => $things->items(),

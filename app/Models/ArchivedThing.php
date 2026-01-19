@@ -41,49 +41,39 @@ class ArchivedThing extends Model
         'metadata' => 'array',
     ];
 
-    /**
-     * Пользователь, который восстановил вещь
-     */
+    // пользователь, который восстановил вещь
     public function restorer()
     {
         return $this->belongsTo(User::class, 'restored_by');
     }
 
-    /**
-     * Оригинальная вещь (если существует)
-     */
+    // оригинальная вещь если существует
     public function originalThing()
     {
         return $this->belongsTo(Thing::class, 'original_id');
     }
+// Аксессоры 
 
-    /**
-     * Проверка, можно ли восстановить вещь
-     */
+    // проверка, можно ли восстановить вещь, accessor: $archivedThing->can_be_restored
     public function canBeRestored(): bool
     {
-        return !$this->restored;
+        return !$this->restored; // можно восстановить если НЕ restored
     }
 
-    /**
-     * Форматированная дата удаления
-     */
+    // форматированная дата удаления, accessor: $archivedThing->formatted_deleted_at
     public function getFormattedDeletedAtAttribute(): string
     {
         return $this->deleted_at->format('d.m.Y H:i');
     }
 
-    /**
-     * Форматированная дата восстановления
-     */
+
+    // форматированная дата восстановления, accessor: $archivedThing->formatted_restored_at
     public function getFormattedRestoredAtAttribute(): ?string
     {
-        return $this->restored_at ? $this->restored_at->format('d.m.Y H:i') : null;
+        return $this->restored_at ? $this->restored_at->format('d.m.Y H:i') : null; // Если restored_at не null  то форматируем, иначе null
     }
 
-    /**
-     * Форматированное количество
-     */
+    // форматированное количество, accessor: $archivedThing->formatted_amount
     public function getFormattedAmountAttribute(): string
     {
         if ($this->unit_abbreviation) {
@@ -92,9 +82,7 @@ class ArchivedThing extends Model
         return $this->amount . ' шт.';
     }
 
-    /**
-     * Полное описание места
-     */
+    // полное описание места, accessor: $archivedThing->place_full
     public function getPlaceFullAttribute(): string
     {
         $result = $this->place_name ?? 'Не указано';

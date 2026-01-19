@@ -10,10 +10,14 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = 
+    [
+        'name', 
+        'description'
+    ];
 
-    public function users(): HasMany
+    public function users(): HasMany // ОДНА роль может иметь МНОГО пользователей
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class); // второй параметр не указан, поэтому ларавел будет искать поле т в таблице users
     }
 }

@@ -36,7 +36,7 @@ class PlaceController extends Controller
         // Проверка прав
         if (!Auth::user()->isAdmin()) {
             return response()->json([
-                'message' => 'Недостаточно прав для создания мест!'
+                'message' => 'Нет прав'
             ], 403);
         }
 
@@ -54,7 +54,7 @@ class PlaceController extends Controller
             'work' => $request->boolean('work', false),
         ]);
 
-        Cache::forget('places_api_all');
+        Cache::forget('places_api_all'); // очистка кеша, чтобы данные удалились 
         Cache::forget('places_available_api');
 
         return response()->json([
@@ -65,9 +65,7 @@ class PlaceController extends Controller
 
     public function show($id)
     {
-        $place = Place::with(['usages.thing.owner', 'usages.user', 'usages.unit'])
-                     ->findOrFail($id);
-        
+        $place = Place::with(['usages.thing.owner', 'usages.user', 'usages.unit'])->findOrFail($id);
         return response()->json([
             'data' => $place
         ]);
@@ -119,7 +117,7 @@ class PlaceController extends Controller
         }
 
         // Проверяем, нет ли вещей в этом месте
-        if ($place->usages()->exists()) {
+        if ($place->usages()->exists()) { // проверяет, есть ли связанные записи в таблице uses
             return response()->json([
                 'message' => 'Нельзя удалить место хранения, в котором есть вещи!'
             ], 400);
@@ -135,7 +133,7 @@ class PlaceController extends Controller
         ]);
     }
 
-    public function available()
+    public function available() // доступные места
     {
         $places = Cache::remember('places_available_api', 300, function () {
             return Place::where('repair', false)

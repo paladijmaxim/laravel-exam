@@ -12,8 +12,8 @@ use App\Policies\PlacePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    protected $policies = [
-        Thing::class => ThingPolicy::class,
+    protected $policies = [ // рега политик
+        Thing::class => ThingPolicy::class, 
         Place::class => PlacePolicy::class,
     ];
 

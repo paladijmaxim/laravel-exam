@@ -11,9 +11,6 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Регистрация пользователя
-     */
     public function register(Request $request)
     {
         $request->validate([
@@ -37,9 +34,6 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Вход пользователя
-     */
     public function login(Request $request)
     {
         $request->validate([
@@ -47,7 +41,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('email', 'password'))) { // попытка аутентификации
             throw ValidationException::withMessages([
                 'email' => ['Неверные учетные данные'],
             ]);
@@ -63,9 +57,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Выход пользователя
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -75,9 +66,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Получение информации о текущем пользователе
-     */
     public function user(Request $request)
     {
         return response()->json($request->user());

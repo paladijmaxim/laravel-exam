@@ -21,7 +21,6 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'remember' => 'boolean',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -32,49 +31,33 @@ class LoginController extends Controller
             ]);
         }
 
-        // 1. Аутентифицируем через сессии (web guard)
-        Auth::guard('web')->login($user, $request->filled('remember'));
-        $request->session()->regenerate();
+        //  Аутентифицируем через сессии (web guard)
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate(); // создание новой session id
 
-        // 2. Создаем токен Sanctum
-        $token = $this->createSanctumToken($user, $request->filled('remember'));
+        //  Создаем токен Sanctum
+        $token = $this->createSanctumToken($user);
         
-        // 3. Сохраняем токен в сессии
+        //  Сохраняем токен в сессии
         session(['sanctum_token' => $token]);
 
-        // 4. Подготавливаем ответ с кукой
+        //  Подготавливаем ответ с кукой
         $response = redirect()->route('dashboard')
             ->with('success', 'Вход выполнен успешно!');
-            
-        // 5. Устанавливаем куку с токеном
-        if ($request->filled('remember')) {
-            $response->withCookie(cookie('sanctum_token', $token, 60 * 24 * 30)); // 30 дней
-        } else {
-            $response->withCookie(cookie('sanctum_token', $token)); // Сессионная кука
-        }
-
         return $response;
     }
     
-    /**
-     * Создает токен Sanctum
-     */
-    private function createSanctumToken(User $user, bool $remember = false): string
+     // создание токена Sanctum
+    private function createSanctumToken(User $user): string
     {
-        $tokenName = $remember ? 'web-token-remember' : 'web-token';
+        $tokenName = 'web-token';
         
-        // Удаляем старые токены того же типа
+        // удаление старых токенов того же типа
         $user->tokens()
             ->where('name', $tokenName)
             ->delete();
         
-        if ($remember) {
-            // Токен с истечением срока через 30 дней
-            $expiresAt = now()->addDays(30);
-            return $user->createToken($tokenName, ['*'], $expiresAt)->plainTextToken;
-        } else {
-            // Токен без срока истечения
-            return $user->createToken($tokenName)->plainTextToken;
-        }
+        // токен без срока истечения
+        return $user->createToken($tokenName)->plainTextToken;
     }
 }

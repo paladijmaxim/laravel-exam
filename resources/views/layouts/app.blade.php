@@ -137,7 +137,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
-            <i class="fas fa-box"></i> Storage of Things
+             Storage of Things
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -205,7 +205,7 @@
                             </a>
                         </li>
                         
-                        @can('viewAll', App\Models\Thing::class)
+                        @can('view-all-things')
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
@@ -224,7 +224,7 @@
                 
                 @include('components.notifications')
                 
-                @can('admin')
+                @canany(['admin', 'manage-places'])
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle text-warning @navactive('things.admin.all') @navactive('places.create') @navactive('places.index')" 
                        href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" 
@@ -232,11 +232,15 @@
                          Админ
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                        @can('view-all-things')
                         <li>
                             <a class="dropdown-item @navactive('things.admin.all')" href="{{ route('things.admin.all') }}">
                                  Просмотр всех вещей
                             </a>
                         </li>
+                        @endcan
+                        
+                        @can('manage-places')
                         <li>
                             <a class="dropdown-item @navactive('places.create')" href="{{ route('places.create') }}">
                                  Добавить место
@@ -247,9 +251,10 @@
                                  Управление местами
                             </a>
                         </li>
+                        @endcan
                     </ul>
                 </li>
-                @endcan
+                @endcanany
             </ul>
             
             <ul class="navbar-nav">
@@ -257,9 +262,9 @@
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
                        data-bs-toggle="dropdown" aria-expanded="false">
                          {{ Auth::user()->name }}
-                        @if(Auth::user()->isAdmin())
+                        @can('admin')
                             <span class="badge bg-warning">Admin</span>
-                        @endif
+                        @endcan
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
@@ -318,7 +323,7 @@
     <script>
     const CURRENT_USER_ID = {{ Auth::id() ?? 'null' }};
     
-    const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+    const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', { // инициализация
         cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
         forceTLS: true,
         enabledTransports: ['ws', 'wss']
@@ -332,7 +337,7 @@
         console.error('Pusher error:', err);
     });
 
-    const channel = pusher.subscribe('things');
+    const channel = pusher.subscribe('things'); // подписка на канал
     
     channel.bind('pusher:subscription_succeeded', function() {
         console.log('Subscribed to things');
@@ -342,7 +347,7 @@
         showThingNotification(data);
     });
     
-    function showThingNotification(data) {
+    function showThingNotification(data) { // сам элемент html
         const isCreator = CURRENT_USER_ID && data.user_id == CURRENT_USER_ID;
         
         const notification = document.createElement('div');
@@ -354,10 +359,8 @@
         
         notification.innerHTML = `
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <i class="fas ${isCreator ? 'fa-user-check' : 'fa-check-circle'}" 
-                   style="font-size: 20px; margin-right: 10px;"></i>
                 <h5 style="margin: 0; font-weight: bold;">
-                    ${isCreator ? '✅ Вы создали вещь!' : '🎉 Новая вещь!'}
+                    ${isCreator ? 'Вы создали вещь!' : ' Новая вещь!'}
                 </h5>
             </div>
             <p style="margin: 0 0 5px 0;">
@@ -370,11 +373,10 @@
                 "${data.thing_name}"
             </p>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <small><i class="far fa-clock"></i> ${data.time || 'Только что'}</small>
+                <small> ${data.time || 'Только что'}</small>
                 <a href="${data.url}" class="btn btn-sm ${isCreator ? 'btn-info' : 'btn-light'}" 
                    style="text-decoration: none;">
                     ${isCreator ? 'Перейти к вещи' : 'Посмотреть'} 
-                    <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         `;
@@ -389,11 +391,9 @@
                 }
             }, 500);
         }, 5000);
-        
-        playNotificationSound();
     }
     
-    const placesChannel = pusher.subscribe('places');
+    const placesChannel = pusher.subscribe('places'); // подписка на канал
     
     placesChannel.bind('pusher:subscription_succeeded', function() {
         console.log('Subscribed to places');
@@ -437,8 +437,6 @@
         notification.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                 <div style="display: flex; align-items: center;">
-                    <i class="fas ${isCreator ? 'fa-user-check' : iconClass}" 
-                       style="font-size: 22px; margin-right: 12px;"></i>
                     <h5 style="margin: 0; font-weight: bold; font-size: 16px;">
                         ${isCreator ? 'Вы создали место!' : 'Новое место!'}
                     </h5>
@@ -458,7 +456,6 @@
             
             ${data.description && data.description !== 'Без описания' 
                 ? `<div style="margin: 10px 0; padding: 8px 12px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; display: flex; align-items: flex-start;">
-                    <i class="fas fa-info-circle mt-1" style="margin-right: 8px;"></i>
                     <span>${data.description}</span>
                    </div>`
                 : ''
@@ -466,11 +463,11 @@
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div style="font-size: 12px; opacity: 0.9;">
-                    <i class="far fa-clock"></i> ${data.time || 'Только что'}
+                     ${data.time || 'Только что'}
                 </div>
                 <a href="${data.url}" class="btn btn-sm ${isCreator ? 'btn-success' : 'btn-light'}" 
                    style="text-decoration: none; font-weight: 600; padding: 5px 15px;">
-                    Перейти <i class="fas fa-arrow-right ms-1"></i>
+                    Перейти
                 </a>
             </div>
         `;
@@ -485,48 +482,7 @@
                 }
             }, 500);
         }, 7000);
-        
-        playNotificationSound();
     }
-    
-    function playNotificationSound() {
-        try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.15);
-        } catch (e) {
-            console.log('Не удалось воспроизвести звук:', e);
-        }
-    }
-    
-    @if(Auth::check() && Auth::user()->isAdmin())
-    function testPlaceNotification() {
-        const testData = {
-            place_id: 999,
-            place_name: 'Тестовое складское помещение',
-            user_id: {{ Auth::id() }},
-            user_name: '{{ Auth::user()->name }}',
-            description: 'Тестовое описание для проверки уведомлений',
-            url: '#',
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            is_repair: false,
-            is_work: true
-        };
-        showPlaceNotification(testData);
-    }
-    @endif
     
     window.showThingNotification = showThingNotification;
     window.showPlaceNotification = showPlaceNotification;

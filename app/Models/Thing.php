@@ -22,52 +22,44 @@ class Thing extends Model
         'wrnt' => 'date'
     ];
 
-    // Владелец вещи
-    public function owner(): BelongsTo
+    public function owner(): BelongsTo // Владелец вещи
     {
         return $this->belongsTo(User::class, 'master');
     }
-
-    // Использования вещи
-    public function usages(): HasMany
+    
+    public function usages(): HasMany // Использования вещи
     {
         return $this->hasMany(UseModel::class, 'thing_id');
     }
-
-    // Все описания вещи
-    public function descriptions(): HasMany
+   
+    public function descriptions(): HasMany // Все описания вещи
     {
         return $this->hasMany(Description::class);
     }
-
-    // Текущее использование (последняя запись)
-    public function currentUsage()
+   
+    public function currentUsage() // Текущее использование (последняя запись)
     {
         return $this->usages()->latest()->first();
     }
 
-    // Текущий пользователь вещи
-    public function currentUser() // Если есть текущее использование возвращает пользователя из этой записи
+    public function currentUser() // если есть текущее использование возвращает пользователя из этой записи
     {
         $usage = $this->currentUsage();
         return $usage ? $usage->user : null;
     }
 
-    // Текущее место хранения
-    public function currentPlace()
+    public function currentPlace() // Текущее место хранения
     {
         $usage = $this->currentUsage();
         return $usage ? $usage->place : null;
     }
-
-    // Проверка, находится ли вещь в использовании
-    public function isInUse(): bool
+  
+    public function isInUse(): bool // Проверка, находится ли вещь в использовании
     {
         return $this->usages()->exists();
     }
 
-    // Альтернативное название для совместимости
-    public function isBorrowed(): bool
+    public function isBorrowed(): bool  // Альтернативное название для совместимости
     {
         return $this->isInUse();
     }
@@ -95,9 +87,7 @@ class Thing extends Model
         return '';
     }
 
-    /**
-     * Boot method для архивации при удалении
-     */
+     // Boot method для архивации при удалении
     protected static function booted(): void
     {
         static::deleted(function (Thing $thing) {
@@ -148,20 +138,16 @@ class Thing extends Model
         });
     }
 
-    /**
-     * Восстановление из архива
-     */
+     // восстановление из архива
     public static function restoreFromArchive(ArchivedThing $archivedThing, User $restorer): Thing
     {
-        // Создаем новую вещь
         $thing = Thing::create([
             'name' => $archivedThing->name,
             'description' => $archivedThing->description,
             'wrnt' => $archivedThing->wrnt,
             'master' => $restorer->id,
         ]);
-
-        // Обновляем запись в архиве
+        
         $archivedThing->update([
             'restored' => true,
             'restored_at' => now(),

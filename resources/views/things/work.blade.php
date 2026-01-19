@@ -5,7 +5,7 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-briefcase"></i> Вещи в работе</h1>
+        <h1> Вещи в работе</h1>
     </div>
 
     <div class="row">
@@ -33,7 +33,7 @@
                     
                     <div class="card-footer">
                         <a href="{{ route('things.show', $thing) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i> Подробнее
+                             Подробнее
                         </a>
                     </div>
                 </div>
@@ -49,6 +49,20 @@
 
     <div class="d-flex justify-content-center">
     {{ $things->onEachSide(1)->links('pagination::simple-bootstrap-5') }}
+
+    @if($things->hasPages())
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+                    @for ($page = 1; $page <= $things->lastPage(); $page++)
+                        <li class="page-item {{ $things->currentPage() == $page ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $things->url($page) }}">{{ $page }}</a>
+                        </li>
+                    @endfor
+                </ul>
+            </nav>
+        </div>
+    @endif
 </div>
 </div>
 @endsection

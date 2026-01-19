@@ -19,25 +19,19 @@ class ArchivedThingController extends Controller
         return view('archived.index', compact('archivedThings'));
     }
 
-    // app/Http\Controllers\ArchivedThingController.php
 public function restore(Request $request, $id) // Принимаем ID вместо модели
 {
-    // Находим запись даже если она soft deleted
+    // нахождение записи даже если она soft deleted
     $archivedThing = ArchivedThing::withTrashed()->findOrFail($id);
-    
-    \Log::info('Восстановление вещи', [
-        'archived_id' => $id,
-        'found' => $archivedThing ? 'YES' : 'NO',
-        'restored' => $archivedThing->restored,
-        'deleted_at' => $archivedThing->deleted_at
-    ]);
     
     if ($archivedThing->restored) {
         return back()->with('error', 'Эта вещь уже была восстановлена ранее.');
     }
 
+    // восстановление вещи (статический метод в модели Thing)
     $thing = Thing::restoreFromArchive($archivedThing, Auth::user());
     
+    // редирект на страницу восстановленной веши
     return redirect()
         ->route('things.show', ['thing' => $thing->id])
         ->with('success', 'Вещь успешно восстановлена! Вы стали ее новым владельцем.');
@@ -55,8 +49,8 @@ public function forceDelete($id)
         abort(403, 'Только администратор может удалять записи из архива навсегда.');
     }
 
-    $archivedThing = ArchivedThing::withTrashed()->findOrFail($id);
-    $name = $archivedThing->name;
+    $archivedThing = ArchivedThing::withTrashed()->findOrFail($id); // нашли запись
+    $name = $archivedThing->name; // сохранили для сообщения пользователю
     $archivedThing->forceDelete();
     
     return redirect()

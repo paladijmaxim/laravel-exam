@@ -10,39 +10,25 @@ use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    /**
-     * The path to your application's "home" route.
-     *
-     * Typically, users are redirected here after authentication.
-     *
-     * @var string
-     */
-    public const HOME = '/dashboard'; // Возвращаем старый путь для совместимости
-
-    /**
-     * Define your route model bindings, pattern filters, and other route configuration.
-     */
+    public const HOME = '/dashboard'; // константа куда редиректить после входа
     public function boot(): void
     {
         $this->configureRateLimiting();
 
         $this->routes(function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/api.php'));
+            Route::middleware('api') // middleware группу 'api'
+                ->prefix('api') // все юрл начинаются с /api
+                ->group(base_path('routes/api.php')); // подкл файл маршрутов
 
             Route::middleware('web')
-                ->group(base_path('routes/web.php'));
+                ->group(base_path('routes/web.php')); // без префикса
         });
     }
 
-    /**
-     * Configure the rate limiters for the application.
-     */
-    protected function configureRateLimiting(): void
+    protected function configureRateLimiting(): void // огр запросов
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());  // 60 запросов в минуту ппо user_id или IP
         });
         
         RateLimiter::for('web-sanctum', function (Request $request) {
