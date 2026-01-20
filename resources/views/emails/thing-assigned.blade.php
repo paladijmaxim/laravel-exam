@@ -151,13 +151,6 @@
             <a href="{{ url('/things/' . $thing->id) }}" class="btn">
                 Перейти к вещи
             </a>
-            
-            <p>Также вы можете найти эту вещь в разделе <strong>"Взятые мной вещи"</strong> в вашем личном кабинете.</p>
-            
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
-                <strong>Важно:</strong>
-                <p style="margin: 5px 0 0 0;">Пожалуйста, бережно относитесь к переданной вам вещи и своевременно возвращайте ее владельцу по необходимости.</p>
-            </div>
         </div>
     </div>
 </body>

@@ -65,6 +65,7 @@ class ThingController extends Controller
             'description' => 'nullable|string',
             'wrnt' => 'nullable|date',
             'place_id' => 'nullable|exists:places,id',
+            'unit_id' => 'nullable|exists:units,id',
         ]);
 
         $thing = Thing::create([
@@ -73,6 +74,16 @@ class ThingController extends Controller
             'wrnt' => $request->wrnt,
             'master' => Auth::id(),
         ]);
+
+        if ($request->place_id) {
+            UseModel::create([
+                'thing_id' => $thing->id,
+                'place_id' => $request->place_id,
+                'user_id' => Auth::id(), // Владелец сразу использует вещь
+                'amount' => $request->amount ?? 1,
+                'unit_id' => $request->unit_id,
+            ]);
+        }
         
         broadcast(new ThingCreated($thing, Auth::user()));
         $this->clearAllThingCaches();
@@ -409,7 +420,7 @@ class ThingController extends Controller
             ->with('success', 'Вещь успешно возвращена');
     }
 
-    public function transferForm(Thing $thing) // форма передачи вещи
+    public function transferForm(Thing $thing)
     {
         if ($thing->master != Auth::id()) {
             abort(403, 'Только владелец может передавать вещь!');
@@ -417,7 +428,7 @@ class ThingController extends Controller
 
         $users = User::all();
         $places = Place::where('repair', false)->where('work', false)->get();
-        $units = Unit::all();
+        $units = Unit::all(); // Уже есть
         
         return view('things.transfer', compact('thing', 'users', 'places', 'units'));
     }

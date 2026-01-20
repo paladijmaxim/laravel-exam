@@ -42,7 +42,6 @@
                             @enderror
                         </div>
                         
-                        {{-- ВОТ ЭТО ПОЛЕ ДОБАВЬ --}}
                         <div class="mb-3">
                             <label for="place_id" class="form-label">Место хранения</label>
                             <select class="form-control @error('place_id') is-invalid @enderror" 
@@ -65,7 +64,25 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        
+
+                        <div class="mb-3">
+                            <label for="unit_id" class="form-label">Единица измерения</label>
+                            <select class="form-control @error('unit_id') is-invalid @enderror" 
+                                    id="unit_id" name="unit_id">
+                                <option value="">-- Выберите единицу измерения --</option>
+                                @foreach(App\Models\Unit::all() as $unit)
+                                    <option value="{{ $unit->id }}" 
+                                        {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
+                                        {{ $unit->display }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">В чем измеряется эта вещь</div>
+                            @error('unit_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                                                
                         <div class="mb-3">
                             <label for="amount" class="form-label">Количество</label>
                             <input type="number" class="form-control @error('amount') is-invalid @enderror" 

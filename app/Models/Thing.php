@@ -157,4 +157,11 @@ class Thing extends Model
 
         return $thing;
     }
+
+
+    public function currentUnit()
+{
+    $usage = $this->currentUsage();
+    return $usage ? $usage->unit : null;
+}
 }

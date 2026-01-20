@@ -35,7 +35,13 @@
                             <h5>Текущее использование</h5>
                             <p><strong>Пользователь:</strong> {{ $currentUsage->user->name }}</p>
                             <p><strong>Место хранения:</strong> {{ $currentUsage->place->name }}</p>
-                            <p><strong>Количество:</strong> {{ $currentUsage->amount }}</p>
+                            <p><strong>Количество:</strong> 
+                                @if($currentUsage->unit)
+                                    {{ $currentUsage->amount }} {{ $currentUsage->unit->abbreviation }}
+                                @else
+                                    {{ $currentUsage->amount }} шт.
+                                @endif
+                            </p>
                             <p><strong>С:</strong> {{ $currentUsage->created_at->format('d.m.Y H:i') }}</p>
                             
                             @if($thing->master == Auth::id())

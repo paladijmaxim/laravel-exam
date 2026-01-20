@@ -59,6 +59,17 @@
                             </div>
                         @endif
                     </div>
+
+                    @if($thing->usages->first())
+                        <div class="alert alert-warning py-1 mb-2">
+                            <small>
+                                Используется: {{ $thing->usages->first()->user->name }}
+                                @if($thing->usages->first()->amount > 0)
+                                    <br>Количество: {{ $thing->usages->first()->formatted_amount }}
+                                @endif
+                            </small>
+                        </div>
+                    @endif
                     
                     <div class="card-footer bg-transparent d-flex justify-content-between">
                         <div>
